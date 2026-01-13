@@ -2,9 +2,12 @@
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { useState } from "react";
+import { ResumeUpload } from "@/components/resume-upload";
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -42,7 +45,9 @@ export default function DashboardPage() {
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Upload and manage your resumes
               </p>
-              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+              <button 
+                onClick={() => setShowUploadModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
                 Upload Resume
               </button>
             </div>
@@ -60,6 +65,23 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Upload Resume</h2>
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl">
+                ×
+              </button>
+            </div>
+            <ResumeUpload />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

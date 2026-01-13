@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Supabase Storage
     const { data, error: uploadError } = await supabase.storage
-      .from("resumes")
+      .from("resume")
       .upload(storagePath, buffer, {
         contentType: file.type,
         upsert: false,
@@ -77,12 +77,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get public URL
-    const { data: publicData } = supabase.storage
-      .from("resumes")
-      .getPublicUrl(storagePath);
-
-    const fileUrl = publicData.publicUrl;
+    // Store the file path (signed URLs can be generated on-demand for downloads)
+    const fileUrl = storagePath;
 
     // Create Resume record in database
     const resume = await prisma.resume.create({
