@@ -11,6 +11,9 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
 
+    console.log("=== UPLOAD ENDPOINT ===");
+    console.log("Auth userId:", userId);
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -40,11 +43,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user from database by clerkId
+    console.log("Looking for user with clerkId:", userId);
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
     });
 
+    console.log("User found:", user?.id, user?.email);
+
     if (!user) {
+      console.error("User not found in database for clerkId:", userId);
+      const allUsers = await prisma.user.findMany();
+      console.error("All users in DB:", allUsers.map(u => ({ id: u.id, clerkId: u.clerkId, email: u.email })));
       return NextResponse.json(
         { error: "User not found in database. Please sign out and sign in again." },
         { status: 404 }
