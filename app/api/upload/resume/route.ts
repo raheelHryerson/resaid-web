@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     const storagePath = `resumes/${user.id}/${fileName}`;
 
     // Upload to Supabase Storage
+    console.log("Uploading to Supabase:", storagePath);
     const { data, error: uploadError } = await supabase.storage
       .from("resume")
       .upload(storagePath, buffer, {
@@ -80,8 +81,9 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error("Supabase upload error:", uploadError);
+      console.error("Error details:", JSON.stringify(uploadError));
       return NextResponse.json(
-        { error: "Failed to upload file to storage" },
+        { error: `Failed to upload file to storage: ${uploadError.message}` },
         { status: 500 }
       );
     }
