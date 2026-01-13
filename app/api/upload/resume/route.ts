@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { parseResume } from "@/lib/resume-parser";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -97,17 +98,32 @@ export async function POST(request: NextRequest) {
     // Store the file path (signed URLs can be generated on-demand for downloads)
     const fileUrl = storagePath;
 
-    // Create Resume record in database
+    // Parse resume to extract skills, experience, education
+    console.log("Parsing resume...");
+    let parsedData;
+    try {
+      parsedData = await parseResume(buffer, file.type);
+      console.log("Resume parsed successfully:", parsedData);
+    } catch (parseError) {
+      console.error("Resume parsing error:", parseError);
+      parsedData = {
+        skills: [],
+        experience: [],
+        education: [],
+      };
+    }
+
+    // Create Resume record in database with parsed data
     const resume = await prisma.resume.create({
       data: {
         userId: user.id,
         fileName: file.name,
         fileUrl: fileUrl,
         fileSize: file.size,
-        parsedData: {},
-        skills: [],
-        experience: [],
-        education: [],
+        parsedData: parsedData,
+        skills: parsedData.skills,
+        experience: parsedData.experience,
+        education: parsedData.education,
         isDefault: false,
       },
     });
