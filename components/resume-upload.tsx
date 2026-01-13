@@ -56,11 +56,26 @@ export function ResumeUpload() {
     
     setIsLoading(true);
     try {
-      // TODO: Implement resume parsing API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload/resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Upload error:", data.error);
+        setUploadStatus("error");
+        return;
+      }
+
       setUploadStatus("success");
-      console.log("Resume uploaded:", file.name);
+      console.log("Resume uploaded:", data.resume);
     } catch (error) {
+      console.error("Upload failed:", error);
       setUploadStatus("error");
     } finally {
       setIsLoading(false);
