@@ -101,19 +101,23 @@ export async function POST(request: NextRequest) {
     // Parse resume to extract skills, experience, education
     console.log("Parsing resume...");
     let parsedData;
+    let originalText = "";
     try {
+      const { extractText } = await import("@/lib/resume/extractText");
+      originalText = await extractText(buffer, file.type);
       parsedData = await parseResume(buffer, file.type);
       console.log("Resume parsed successfully:", parsedData);
     } catch (parseError) {
       console.error("Resume parsing error:", parseError);
       parsedData = {
+        personal: { name: null, email: null, phone: null, location: null },
         skills: [],
         experience: [],
         education: [],
       };
     }
 
-    // Create Resume record in database with parsed data
+    // PHASE 7: Create Resume record + version history (never overwrite)
     const resume = await prisma.resume.create({
       data: {
         userId: user.id,
@@ -121,12 +125,23 @@ export async function POST(request: NextRequest) {
         fileUrl: fileUrl,
         fileSize: file.size,
         parsedData: parsedData as any,
-        skills: parsedData.skills,
-        experience: parsedData.experience as any,
-        education: parsedData.education as any,
         isDefault: false,
+        // Create initial version
+        versions: {
+          create: {
+            originalText: originalText,
+            parsedData: parsedData as any,
+            parsingEngine: file.type === "application/pdf" ? "pdf2json-v1" : "mammoth-v1",
+            version: 1,
+          },
+        },
+      },
+      include: {
+        versions: true,
       },
     });
+
+    console.log(`Resume created with ${resume.versions.length} version(s)`);
 
     return NextResponse.json(
       {

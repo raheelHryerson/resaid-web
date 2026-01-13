@@ -1,154 +1,113 @@
-import pdfParse from "pdf-parse";
-import * as mammoth from "mammoth";
+/**
+ * MAIN PARSER ORCHESTRATOR
+ * Coordinates all parsing phases:
+ * Phase 3: Text Extraction
+ * Phase 4: Section Detection
+ * Phase 5: Section-Specific Parsing
+ * Phase 6: Validation & Repair
+ */
 
-interface ParsedResumeData {
-  skills: string[];
-  experience: Array<{
-    title: string;
-    company: string;
-    duration?: string;
-  }>;
-  education: Array<{
-    degree: string;
-    school: string;
-    year?: string;
-  }>;
-  summary?: string;
-}
+import { extractText } from "./resume/extractText";
+import { detectSections } from "./resume/detectSections";
+import { parseSkills } from "./resume/parseSkills";
+import { parseExperience } from "./resume/parseExperience";
+import { parseEducation } from "./resume/parseEducation";
+import { ResumeSchema, type Resume } from "./resume/schema";
 
-// Extract text from PDF
-async function extractPdfText(buffer: Buffer): Promise<string> {
-  try {
-    const data = await pdfParse(buffer);
-    return data.text;
-  } catch (error) {
-    console.error("PDF parsing error:", error);
-    throw new Error("Failed to parse PDF file");
-  }
-}
-
-// Extract text from DOCX
-async function extractDocxText(buffer: Buffer): Promise<string> {
-  try {
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
-  } catch (error) {
-    console.error("DOCX parsing error:", error);
-    throw new Error("Failed to parse DOCX file");
-  }
-}
-
-// Parse text to extract structured data
-function parseResumeText(text: string): ParsedResumeData {
-  const data: ParsedResumeData = {
-    skills: [],
-    experience: [],
-    education: [],
-  };
-
-  // Convert to lowercase for matching while preserving original case for display
-  const lowerText = text.toLowerCase();
-  const lines = text.split("\n").map((line) => line.trim());
-
-  // Extract skills (look for common keywords)
-  const skillKeywords = [
-    "javascript",
-    "typescript",
-    "python",
-    "java",
-    "react",
-    "node.js",
-    "sql",
-    "mongodb",
-    "aws",
-    "docker",
-    "kubernetes",
-    "git",
-    "html",
-    "css",
-    "tailwind",
-    "nextjs",
-    "express",
-    "vue",
-    "angular",
-    "rest",
-    "graphql",
-    "postgresql",
-    "mysql",
-  ];
-
-  skillKeywords.forEach((skill) => {
-    if (lowerText.includes(skill) && !data.skills.includes(skill)) {
-      data.skills.push(skill);
-    }
-  });
-
-  // Extract experience (look for common job title patterns and keywords)
-  const jobTitlePatterns =
-    /(?:Software|Senior|Junior|Lead|Principal)\s+(?:Engineer|Developer|Architect|Manager|Designer|Analyst)/gi;
-  const jobTitles = text.match(jobTitlePatterns) || [];
-
-  jobTitles.forEach((title) => {
-    // Try to find company and duration near the job title
-    const titleIndex = text.indexOf(title);
-    const contextWindow = text.substring(
-      Math.max(0, titleIndex - 100),
-      Math.min(text.length, titleIndex + 200)
-    );
-
-    data.experience.push({
-      title: title.trim(),
-      company: "Unknown Company",
-      duration: "Unknown Duration",
-    });
-  });
-
-  // Extract education (look for degree keywords)
-  const degreePatterns =
-    /(?:Bachelor|Master|PhD|Associates?|B\.?S\.?|M\.?S\.?|B\.?A\.?|M\.?A\.?|MBA|BS|MS|BA|MA)\s+(?:in|of)?\s+([A-Za-z\s]+)(?:,|\s|$)/gi;
-  const degrees = text.match(degreePatterns) || [];
-
-  degrees.forEach((degree) => {
-    if (degree.trim()) {
-      data.education.push({
-        degree: degree.trim(),
-        school: "Unknown School",
-      });
-    }
-  });
-
-  // Extract summary (first 2-3 sentences if available)
-  const summaryEndIndex = text.indexOf("\n\n") || text.indexOf("\n\n");
-  if (summaryEndIndex > 0) {
-    const potentialSummary = text.substring(0, summaryEndIndex).trim();
-    if (
-      potentialSummary.length < 500 &&
-      potentialSummary.split(" ").length < 100
-    ) {
-      data.summary = potentialSummary;
-    }
-  }
-
-  return data;
-}
-
-// Main parse function
 export async function parseResume(
   buffer: Buffer,
   mimeType: string
-): Promise<ParsedResumeData> {
-  let text = "";
+): Promise<Resume> {
+  try {
+    // PHASE 3: Extract raw text
+    console.log("[PHASE 3] Extracting text...");
+    const text = await extractText(buffer, mimeType);
+    console.log(`[PHASE 3] Extracted ${text.length} characters`);
 
-  if (mimeType === "application/pdf") {
-    text = await extractPdfText(buffer);
-  } else if (
-    mimeType ===
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ) {
-    text = await extractDocxText(buffer);
-  } else {
-    throw new Error("Unsupported file type");
+    // PHASE 4: Detect sections
+    console.log("[PHASE 4] Detecting sections...");
+    const sections = detectSections(text);
+    console.log(
+      `[PHASE 4] Found sections:`,
+      Object.fromEntries(
+        Object.entries(sections).map(([k, v]) => [k, v.length])
+      )
+    );
+
+    // PHASE 5: Parse each section
+    console.log("[PHASE 5] Parsing sections...");
+
+    // Parse skills
+    const skills = parseSkills(sections.skills);
+    console.log(`[PHASE 5] Extracted ${skills.length} skills`);
+
+    // Parse experience
+    const experience = parseExperience(sections.experience);
+    console.log(`[PHASE 5] Extracted ${experience.length} experience entries`);
+
+    // Parse education
+    const education = parseEducation(sections.education);
+    console.log(`[PHASE 5] Extracted ${education.length} education entries`);
+
+    // Parse personal (contact) info
+    const personal = parsePersonal(sections.personal);
+
+    // PHASE 6: Validate with Zod
+    console.log("[PHASE 6] Validating with schema...");
+    const parsedResume: Resume = {
+      personal,
+      experience,
+      education,
+      skills,
+    };
+
+    const validated = ResumeSchema.parse(parsedResume);
+    console.log("[PHASE 6] Validation passed");
+
+    return validated;
+  } catch (error) {
+    console.error("[ERROR] Resume parsing failed:", error);
+
+    // Return empty validated structure on failure
+    // This ensures we never have invalid data
+    return ResumeSchema.parse({
+      personal: {
+        name: null,
+        email: null,
+        phone: null,
+        location: null,
+      },
+      experience: [],
+      education: [],
+      skills: [],
+    });
   }
+}
 
-  return parseResumeText(text);
+function parsePersonal(personalLines: string[]): {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+} {
+  const text = personalLines.join(" ");
+
+  // Extract email
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  const email = emailMatch ? emailMatch[0] : null;
+
+  // Extract phone
+  const phoneMatch = text.match(
+    /(?:\+?1[-.\s]?)?(?:\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}/
+  );
+  const phone = phoneMatch ? phoneMatch[0] : null;
+
+  // Extract location (usually a city, state format)
+  const locationMatch = text.match(/[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}/);
+  const location = locationMatch ? locationMatch[0] : null;
+
+  // Name is usually the first line or first few words
+  const name = personalLines[0] || null;
+
+  return { name, email, phone, location };
 }

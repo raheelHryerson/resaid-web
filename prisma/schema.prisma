@@ -36,20 +36,38 @@ model Resume {
   fileUrl       String
   fileSize      Int
   
-  // Parsed resume data
-  parsedData    Json?      // Structured resume data
-  skills        String[]   @default([])
-  experience    String[]   @default([])
-  education     String[]   @default([])
+  // Parsed resume data (latest version)
+  parsedData    Json?      // Structured resume data (skills, experience, education arrays)
   
   isDefault     Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
   // Relations
+  versions      ResumeVersion[]
   applications  Application[]
 
   @@index([userId])
+}
+
+// Resume version history - never overwrite, always version
+model ResumeVersion {
+  id            String     @id @default(cuid())
+  resumeId      String
+  resume        Resume     @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  // Original file data
+  originalText  String     // Raw extracted text from file
+  parsedData    Json       // Parsed structured data at time of upload
+  
+  // Metadata
+  parsingEngine String     // "pdf2json-v1", "mammoth-v1", etc. for tracking improvements
+  version       Int        @default(1)
+  
+  createdAt     DateTime   @default(now())
+
+  @@index([resumeId])
+  @@index([createdAt])
 }
 
 // Job Application model

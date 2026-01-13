@@ -4,13 +4,16 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ResumeUpload } from "@/components/resume-upload";
+import Link from "next/link";
 
 interface Resume {
   id: string;
   fileName: string;
+  fileUrl: string;
+  fileSize: number;
   skills: string[];
-  experience: Array<{ title: string; company: string; duration?: string }>;
-  education: Array<{ degree: string; school: string; year?: string }>;
+  experience: Array<{ title: string | null; organization: string | null; startDate: string | null; endDate: string | null; location: string | null; bullets: string[] }>;
+  education: Array<{ credential: string | null; institution: string | null; field: string | null; startDate: string | null; endDate: string | null }>;
   createdAt: string;
 }
 
@@ -115,7 +118,7 @@ export default function DashboardPage() {
                           <div className="space-y-1">
                             {resume.experience.slice(0, 2).map((exp, i) => (
                               <p key={i} className="text-sm text-gray-600 dark:text-gray-400">
-                                {exp.title} at {exp.company}
+                                {exp.title || "Job Title"} {exp.organization && `at ${exp.organization}`}
                               </p>
                             ))}
                             {resume.experience.length > 2 && (
@@ -131,7 +134,7 @@ export default function DashboardPage() {
                           <div className="space-y-1">
                             {resume.education.slice(0, 2).map((edu, i) => (
                               <p key={i} className="text-sm text-gray-600 dark:text-gray-400">
-                                {edu.degree}
+                                {edu.credential || "Degree"} {edu.field && `in ${edu.field}`}
                               </p>
                             ))}
                             {resume.education.length > 2 && (
@@ -144,6 +147,12 @@ export default function DashboardPage() {
                       <p className="text-xs text-gray-500">
                         Uploaded {new Date(resume.createdAt).toLocaleDateString()}
                       </p>
+                      <Link
+                        href={`/dashboard/resume/${resume.id}`}
+                        className="mt-3 inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+                      >
+                        View & Edit →
+                      </Link>
                     </div>
                   ))}
                   <button 

@@ -19,12 +19,13 @@
     "lucide-react": "^0.562.0",
     "mammoth": "^1.11.0",
     "next": "16.1.1",
-    "pdf-parse": "^2.4.5",
+    "pdf2json": "^3.1.4",
     "prisma": "^6.19.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "svix": "^1.84.1",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

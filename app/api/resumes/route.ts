@@ -31,14 +31,23 @@ export async function GET() {
     return NextResponse.json(
       {
         success: true,
-        resumes: resumes.map((resume) => ({
-          id: resume.id,
-          fileName: resume.fileName,
-          skills: resume.skills,
-          experience: resume.experience,
-          education: resume.education,
-          createdAt: resume.createdAt,
-        })),
+        resumes: resumes.map((resume) => {
+          const parsed = (resume.parsedData as any) || {
+            skills: [],
+            experience: [],
+            education: [],
+          };
+          return {
+            id: resume.id,
+            fileName: resume.fileName,
+            fileUrl: resume.fileUrl,
+            fileSize: resume.fileSize,
+            skills: parsed.skills || [],
+            experience: parsed.experience || [],
+            education: parsed.education || [],
+            createdAt: resume.createdAt,
+          };
+        }),
       },
       { status: 200 }
     );
