@@ -2,12 +2,43 @@
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ResumeUpload } from "@/components/resume-upload";
+
+interface Resume {
+  id: string;
+  fileName: string;
+  skills: string[];
+  experience: Array<{ title: string; company: string; duration?: string }>;
+  education: Array<{ degree: string; school: string; year?: string }>;
+  createdAt: string;
+}
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchResumes = async () => {
+      try {
+        const response = await fetch("/api/resumes");
+        if (response.ok) {
+          const data = await response.json();
+          setResumes(data.resumes || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch resumes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchResumes();
+    }
+  }, [user]);
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -42,14 +73,86 @@ export default function DashboardPage() {
             {/* Resume Section */}
             <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <h2 className="text-2xl font-bold mb-4">📄 Resumes</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Upload and manage your resumes
-              </p>
-              <button 
-                onClick={() => setShowUploadModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
-                Upload Resume
-              </button>
+              
+              {loading ? (
+                <p className="text-gray-500">Loading resumes...</p>
+              ) : resumes.length === 0 ? (
+                <>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Upload and manage your resumes
+                  </p>
+                  <button 
+                    onClick={() => setShowUploadModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+                    Upload Resume
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  {resumes.map((resume) => (
+                    <div key={resume.id} className="p-4 bg-blue-50 dark:bg-slate-700 rounded-lg">
+                      <h3 className="font-semibold text-lg mb-2">{resume.fileName}</h3>
+                      
+                      {resume.skills.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Skills:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {resume.skills.slice(0, 5).map((skill, i) => (
+                              <span key={i} className="px-2 py-1 bg-blue-200 dark:bg-blue-800 text-sm rounded">
+                                {skill}
+                              </span>
+                            ))}
+                            {resume.skills.length > 5 && (
+                              <span className="text-sm text-gray-600">+{resume.skills.length - 5} more</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {resume.experience.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Experience:</p>
+                          <div className="space-y-1">
+                            {resume.experience.slice(0, 2).map((exp, i) => (
+                              <p key={i} className="text-sm text-gray-600 dark:text-gray-400">
+                                {exp.title} at {exp.company}
+                              </p>
+                            ))}
+                            {resume.experience.length > 2 && (
+                              <p className="text-sm text-gray-600">+{resume.experience.length - 2} more roles</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {resume.education.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Education:</p>
+                          <div className="space-y-1">
+                            {resume.education.slice(0, 2).map((edu, i) => (
+                              <p key={i} className="text-sm text-gray-600 dark:text-gray-400">
+                                {edu.degree}
+                              </p>
+                            ))}
+                            {resume.education.length > 2 && (
+                              <p className="text-sm text-gray-600">+{resume.education.length - 2} more degrees</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <p className="text-xs text-gray-500">
+                        Uploaded {new Date(resume.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => setShowUploadModal(true)}
+                    className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+                    Upload Another Resume
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Applications Section */}
