@@ -1,11 +1,17 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 // Max 10MB file size
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
+// Create Supabase client with service role key for uploads
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,9 +76,9 @@ export async function POST(request: NextRequest) {
     const fileName = `${user.id}-${timestamp}.${fileExt}`;
     const storagePath = `resumes/${user.id}/${fileName}`;
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage using service role
     console.log("Uploading to Supabase:", storagePath);
-    const { data, error: uploadError } = await supabase.storage
+    const { data, error: uploadError } = await supabaseAdmin.storage
       .from("resume")
       .upload(storagePath, buffer, {
         contentType: file.type,
