@@ -120,10 +120,10 @@ export async function POST(request: NextRequest) {
         fileName: file.name,
         fileUrl: fileUrl,
         fileSize: file.size,
-        parsedData: parsedData,
+        parsedData: parsedData as any,
         skills: parsedData.skills,
-        experience: parsedData.experience,
-        education: parsedData.education,
+        experience: parsedData.experience as any,
+        education: parsedData.education as any,
         isDefault: false,
       },
     });
