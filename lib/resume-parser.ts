@@ -1,3 +1,4 @@
+import pdfParse from "pdf-parse";
 import * as mammoth from "mammoth";
 
 interface ParsedResumeData {
@@ -18,8 +19,6 @@ interface ParsedResumeData {
 // Extract text from PDF
 async function extractPdfText(buffer: Buffer): Promise<string> {
   try {
-    // Dynamic import to handle CommonJS module
-    const pdfParse = (await import("pdf-parse")).default;
     const data = await pdfParse(buffer);
     return data.text;
   } catch (error) {
