@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - linked to Clerk auth
+model User {
+  id            String     @id @default(cuid())
+  clerkId       String     @unique
+  email         String     @unique
+  firstName     String?
+  lastName      String?
+  avatarUrl     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  resumes       Resume[]
+  applications  Application[]
+}
+
+// Resume model
+model Resume {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fileName      String
+  fileUrl       String
+  fileSize      Int
+  
+  // Parsed resume data
+  parsedData    Json?      // Structured resume data
+  skills        String[]   @default([])
+  experience    String[]   @default([])
+  education     String[]   @default([])
+  
+  isDefault     Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  applications  Application[]
+
+  @@index([userId])
+}
+
+// Job Application model
+model Application {
+  id              String     @id @default(cuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId        String
+  resume          Resume     @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  jobUrl          String
+  companyName     String
+  jobTitle        String
+  jobDescription  String?
+  
+  autofillData    Json?      // Autofill responses
+  answers         Json?      // AI-generated answers
+  
+  status          String     @default("draft") // draft, submitted, rejected, accepted
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([resumeId])
+}
