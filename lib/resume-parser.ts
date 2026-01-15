@@ -73,9 +73,16 @@ export async function parseResume(
     return ResumeSchema.parse({
       personal: {
         name: null,
+        firstName: null,
+        lastName: null,
         email: null,
         phone: null,
+        extension: null,
+        countryPhoneCode: null,
         location: null,
+        city: null,
+        postalCode: null,
+        country: null,
       },
       experience: [],
       education: [],
@@ -86,9 +93,16 @@ export async function parseResume(
 
 function parsePersonal(personalLines: string[]): {
   name: string | null;
+  firstName: string | null;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
+  extension: string | null;
+  countryPhoneCode: string | null;
   location: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string | null;
 } {
   const text = personalLines.join(" ");
 
@@ -96,18 +110,62 @@ function parsePersonal(personalLines: string[]): {
   const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
   const email = emailMatch ? emailMatch[0] : null;
 
-  // Extract phone
-  const phoneMatch = text.match(
-    /(?:\+?1[-.\s]?)?(?:\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}/
-  );
-  const phone = phoneMatch ? phoneMatch[0] : null;
+  // Extract phone with country code (e.g., +1, +44, etc.)
+  const phoneWithCodeMatch = text.match(/\+(\d{1,3})\s*[-.\s]?(\d{3,4})[-.\s]?(\d{3})[-.\s]?(\d{4})/);
+  let phone = null;
+  let countryPhoneCode = null;
+  let extension = null;
 
-  // Extract location (usually a city, state format)
-  const locationMatch = text.match(/[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,?\s+[A-Z]{2}/);
-  const location = locationMatch ? locationMatch[0] : null;
+  if (phoneWithCodeMatch) {
+    countryPhoneCode = phoneWithCodeMatch[1];
+    phone = `${phoneWithCodeMatch[2]}-${phoneWithCodeMatch[3]}-${phoneWithCodeMatch[4]}`;
+  } else {
+    // Try without country code
+    const phoneMatch = text.match(/(?:\(\d{3}\)|\d{3})[-.\s]?(\d{3})[-.\s]?(\d{4})(?:\s*(?:ext|x|extension)\s*(\d+))?/i);
+    if (phoneMatch) {
+      phone = phoneMatch[0].split(/\s+(?:ext|x|extension)/i)[0].trim();
+      extension = phoneMatch[3] || null;
+    }
+  }
 
-  // Name is usually the first line or first few words
+  // Extract location (city, state)
+  const locationMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?),?\s+([A-Z]{2})/);
+  let location = null;
+  let city = null;
+  let country = null;
+
+  if (locationMatch) {
+    city = locationMatch[1];
+    country = locationMatch[2]; // State abbreviation or country code
+    location = locationMatch[0];
+  }
+
+  // Extract postal code (US format: 5 or 9 digits)
+  const postalMatch = text.match(/\b\d{5}(-\d{4})?\b/);
+  const postalCode = postalMatch ? postalMatch[0] : null;
+
+  // Extract name and split into first/last
   const name = personalLines[0] || null;
+  let firstName = null;
+  let lastName = null;
 
-  return { name, email, phone, location };
+  if (name) {
+    const nameParts = name.trim().split(/\s+/);
+    firstName = nameParts[0] || null;
+    lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
+  }
+
+  return { 
+    name, 
+    firstName, 
+    lastName, 
+    email, 
+    phone, 
+    extension,
+    countryPhoneCode,
+    location, 
+    city, 
+    postalCode, 
+    country 
+  };
 }

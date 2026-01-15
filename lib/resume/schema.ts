@@ -25,10 +25,17 @@ export const EducationEntry = z.object({
 
 export const ResumeSchema = z.object({
   personal: z.object({
-    name: z.string().nullable(),
-    email: z.string().nullable(),
-    phone: z.string().nullable(),
-    location: z.string().nullable(),
+    name: z.string().nullable().optional(),
+    firstName: z.string().nullable().optional(),
+    lastName: z.string().nullable().optional(),
+    email: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
+    extension: z.string().nullable().optional(),
+    countryPhoneCode: z.string().nullable().optional(),
+    location: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    postalCode: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
   }),
   experience: z.array(ExperienceEntry).default([]),
   education: z.array(EducationEntry).default([]),

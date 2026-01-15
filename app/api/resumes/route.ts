@@ -12,12 +12,42 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: CORS_HEADERS });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
+    // Try Clerk auth first
+    let userId: string | null = null;
+    try {
+      const authResult = await auth();
+      userId = authResult.userId;
+    } catch (e) {
+      // ignore, will try API key
+    }
+
+    // If no Clerk auth, try API key
+    if (!userId) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const apiKeyValue = authHeader.substring(7);
+        const apiKeyRecord = await prisma.apiKey.findUnique({
+          where: { key: apiKeyValue, isActive: true },
+          include: { user: true },
+        });
+
+        if (apiKeyRecord) {
+          userId = apiKeyRecord.user.clerkId;
+          await prisma.apiKey.update({
+            where: { id: apiKeyRecord.id },
+            data: { lastUsedAt: new Date() },
+          });
+        }
+      }
+    }
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401, headers: CORS_HEADERS }
+      );
     }
 
     // Get user from database
@@ -28,7 +58,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
-        { status: 404 }
+        { status: 404, headers: CORS_HEADERS }
       );
     }
 

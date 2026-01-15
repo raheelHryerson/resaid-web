@@ -83,19 +83,30 @@ export async function GET(request: Request) {
       }, { status: 404, headers: CORS_HEADERS });
     }
 
-    // Extract profile data from resume
+    // Extract profile data from resume's parsedData
+    const parsedData = (resume.parsedData as any) || { personal: {} };
+    const personal = parsedData.personal || {};
+    const experience = parsedData.experience || [];
+
     const profile = {
-      fullName: resume.fullName || "",
-      email: resume.email || "",
-      phone: resume.phone || "",
-      linkedin: resume.linkedin || "",
-      location: resume.location || "",
+      firstName: personal.firstName || "",
+      lastName: personal.lastName || "",
+      fullName: personal.name || "",
+      email: personal.email || "",
+      phone: personal.phone || "",
+      extension: personal.extension || "",
+      countryPhoneCode: personal.countryPhoneCode || "",
+      linkedin: personal.linkedin || "",
+      location: personal.location || "",
+      city: personal.city || "",
+      postalCode: personal.postalCode || "",
+      country: personal.country || "",
       currentCompany: "",
     };
 
     // Get current company from most recent experience
-    if (resume.experience && Array.isArray(resume.experience)) {
-      const experiences = resume.experience as Array<{
+    if (Array.isArray(experience)) {
+      const experiences = experience as Array<{
         organization?: string | null;
         endDate?: string | null;
       }>;
