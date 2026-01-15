@@ -22,6 +22,9 @@ export default function DashboardPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [apiKeyLoading, setApiKeyLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchResumes = async () => {
@@ -38,8 +41,23 @@ export default function DashboardPage() {
       }
     };
 
+    const fetchApiKey = async () => {
+      try {
+        const response = await fetch("/api/user/api-key");
+        if (response.ok) {
+          const data = await response.json();
+          setApiKey(data.apiKey);
+        }
+      } catch (error) {
+        console.error("Failed to fetch API key:", error);
+      } finally {
+        setApiKeyLoading(false);
+      }
+    };
+
     if (user) {
       fetchResumes();
+      fetchApiKey();
     }
   }, [user]);
 
@@ -174,6 +192,42 @@ export default function DashboardPage() {
                 New Application
               </button>
             </div>
+          </div>
+
+          {/* Chrome Extension API Key Section */}
+          <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <h2 className="text-2xl font-bold mb-2">🔑 Chrome Extension API Key</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Use this key to authenticate your ResAid Chrome extension for intelligent job application autofill
+            </p>
+            
+            {apiKeyLoading ? (
+              <p className="text-gray-500">Loading API key...</p>
+            ) : apiKey ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 flex items-center justify-between">
+                  <code className="text-sm font-mono text-gray-700 dark:text-gray-300 break-all">{apiKey}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(apiKey);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="ml-4 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition whitespace-nowrap flex-shrink-0"
+                  >
+                    {copied ? "✓ Copied!" : "Copy"}
+                  </button>
+                </div>
+                <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-2 list-decimal list-inside">
+                  <li>Copy your API key above</li>
+                  <li>Go to the ResAid Chrome extension settings</li>
+                  <li>Paste the key in the API Key field</li>
+                  <li>Save and start using autofill!</li>
+                </ol>
+              </div>
+            ) : (
+              <p className="text-red-600 dark:text-red-400">Failed to load API key. Please try refreshing the page.</p>
+            )}
           </div>
         </div>
       </main>
