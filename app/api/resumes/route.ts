@@ -2,6 +2,16 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: CORS_HEADERS });
+}
+
 export async function GET() {
   try {
     const { userId } = await auth();
@@ -49,13 +59,13 @@ export async function GET() {
           };
         }),
       },
-      { status: 200 }
+      { status: 200, headers: CORS_HEADERS }
     );
   } catch (error) {
     console.error("Error fetching resumes:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
