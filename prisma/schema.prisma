@@ -24,6 +24,7 @@ model User {
   // Relations
   resumes       Resume[]
   applications  Application[]
+  apiKeys       ApiKey[]
 }
 
 // Resume model
@@ -93,4 +94,22 @@ model Application {
 
   @@index([userId])
   @@index([resumeId])
+}
+
+// API Key model - for extension authentication
+model ApiKey {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  key           String     @unique @default(cuid()) // Random key
+  name          String     @default("Extension Key")
+  isActive      Boolean    @default(true)
+  
+  lastUsedAt    DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([key])
 }

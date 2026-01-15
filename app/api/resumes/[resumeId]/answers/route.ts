@@ -21,9 +21,48 @@ export async function POST(
   context: { params: Promise<{ resumeId: string }> }
 ) {
   try {
-    const { userId } = await auth();
+    // Try Clerk auth first, then API key auth
+    let userId: string | null = null;
+    let user = null;
+
+    // Method 1: Clerk authentication
+    const { userId: clerkUserId } = await auth();
+    if (clerkUserId) {
+      userId = clerkUserId;
+      user = await prisma.user.findUnique({
+        where: { clerkId: clerkUserId },
+      });
+    }
+
+    // Method 2: API key authentication (for extension)
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const authHeader = request.headers.get("Authorization") || "";
+      const apiKey = authHeader.replace("Bearer ", "");
+
+      if (apiKey) {
+        const foundApiKey = await prisma.apiKey.findUnique({
+          where: { key: apiKey },
+          include: { user: true },
+        });
+
+        if (foundApiKey && foundApiKey.isActive) {
+          user = foundApiKey.user;
+          userId = foundApiKey.user.id;
+          
+          // Update last used timestamp
+          await prisma.apiKey.update({
+            where: { key: apiKey },
+            data: { lastUsedAt: new Date() },
+          });
+        }
+      }
+    }
+
+    if (!userId || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401, headers: CORS_HEADERS }
+      );
     }
 
     const body = await request.json();
@@ -37,16 +76,11 @@ export async function POST(
     if (!jobDescription || questions.length === 0) {
       return NextResponse.json(
         { error: "jobDescription and questions[] are required" },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
     const { resumeId } = await context.params;
-
-    const user = await prisma.user.findUnique({ where: { clerkId: userId } });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     const resume = await prisma.resume.findUnique({ where: { id: resumeId } });
     if (!resume || resume.userId !== user.id) {
