@@ -5,7 +5,8 @@ const isDashboard = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   // Ensure user is signed in; Clerk handles redirect
-  if (!auth.userId) return;
+  const { userId } = await auth();
+  if (!userId) return;
 
   if (isDashboard(req)) {
     // If onboarding cookie is set, allow

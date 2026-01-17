@@ -11,6 +11,7 @@ interface Resume {
   fileName: string;
   fileUrl: string;
   fileSize: number;
+  parsedData?: any; // JSON field from Prisma
   skills: string[];
   experience: Array<{ title: string | null; organization: string | null; startDate: string | null; endDate: string | null; location: string | null; bullets: string[] }>;
   education: Array<{ credential: string | null; institution: string | null; field: string | null; startDate: string | null; endDate: string | null }>;
@@ -78,7 +79,7 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, {user.firstName}!</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.firstName || 'User'}!</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Manage your resumes and job applications
           </p>

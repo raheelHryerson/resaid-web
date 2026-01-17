@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
@@ -24,3 +24,4 @@ export async function POST() {
   });
   return res;
 }
+
