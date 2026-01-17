@@ -89,18 +89,28 @@ export async function GET(request: Request) {
     const experience = parsedData.experience || [];
 
     const profile = {
-      firstName: personal.firstName || "",
-      lastName: personal.lastName || "",
+      firstName: user.firstName || personal.firstName || "",
+      lastName: user.lastName || personal.lastName || "",
+      middleName: user.middleName || personal.middleName || "",
       fullName: personal.name || "",
-      email: personal.email || "",
-      phone: personal.phone || "",
+      email: user.email || personal.email || "",
+      phone: user.phone || personal.phone || "",
       extension: personal.extension || "",
       countryPhoneCode: personal.countryPhoneCode || "",
       linkedin: personal.linkedin || "",
       location: personal.location || "",
-      city: personal.city || "",
+      city: user.city || personal.city || "",
       postalCode: personal.postalCode || "",
-      country: personal.country || "",
+      country: user.country || personal.country || "",
+      province: user.state || personal.province || "",
+      github: personal.github || "",
+      portfolio: personal.portfolio || "",
+      twitter: personal.twitter || "",
+      pronouns: personal.pronouns || "",
+      salary: personal.salary || "",
+      availability: personal.availability || "",
+      workAuth: personal.workAuth || "",
+      referral: personal.referral || "",
       currentCompany: "",
     };
 
@@ -144,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { firstName, lastName, email, phone, location, yearsOfExperience, currentRole } = body;
+    const { firstName, lastName, email, phone, location, city, state, country } = body;
 
     // Find user by clerkId
     const user = await prisma.user.findUnique({
@@ -162,6 +172,10 @@ export async function POST(request: NextRequest) {
         firstName: firstName || user.firstName,
         lastName: lastName || user.lastName,
         email: email || user.email,
+        phone: phone || user.phone,
+        city: city || user.city,
+        state: state || user.state,
+        country: country || user.country,
       },
     });
 
@@ -173,6 +187,10 @@ export async function POST(request: NextRequest) {
         firstName: updated.firstName,
         lastName: updated.lastName,
         email: updated.email,
+        phone: updated.phone,
+        city: updated.city,
+        state: updated.state,
+        country: updated.country,
       }
     });
   } catch (error) {

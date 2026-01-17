@@ -19,34 +19,77 @@ interface Resume {
 }
 
 export default function DashboardPage() {
-    const [profileSaved, setProfileSaved] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    city: "",
+    state: "",
+    country: "",
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "applications" | "profile" | "resume-rating" | "achievements">("overview");
+  const [apiKey, setApiKey] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"overview" | "applications" | "profile" | "resume-rating" | "achievements" | "api-key">("overview");
 
   useEffect(() => {
-    const fetchResumes = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/resumes");
-        if (response.ok) {
-          const data = await response.json();
-          setResumes(data.resumes || []);
+        // Fetch resumes
+        const resumeResponse = await fetch("/api/resumes");
+        if (resumeResponse.ok) {
+          const resumeData = await resumeResponse.json();
+          setResumes(resumeData.resumes || []);
+        }
+
+        // Fetch API key
+        const apiKeyResponse = await fetch("/api/user/api-key");
+        if (apiKeyResponse.ok) {
+          const apiKeyData = await apiKeyResponse.json();
+          setApiKey(apiKeyData.apiKey || "");
         }
       } catch (error) {
-        console.error("Failed to fetch resumes:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
 
     if (user) {
-      fetchResumes();
+      fetchData();
     }
   }, [user]);
+
+  // Initialize profile data when user and resumes are loaded
+  useEffect(() => {
+    if (user && resumes.length >= 0) { // resumes might be empty array
+      setProfileData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.primaryEmailAddress?.emailAddress || "",
+        phone: resumes[0]?.parsedData?.personal?.phone || "",
+        city: resumes[0]?.parsedData?.personal?.city || "",
+        state: resumes[0]?.parsedData?.personal?.province || "",
+        country: resumes[0]?.parsedData?.personal?.country || "",
+      });
+    }
+  }, [user, resumes]);
+
+  // Handle URL parameters for tab selection
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'api-key') {
+      setActiveTab('api-key');
+    }
+  }, []);
 
   // Handle redirects client-side to avoid using server-only redirect()
   useEffect(() => {
@@ -61,6 +104,18 @@ export default function DashboardPage() {
       router.replace("/onboarding");
     }
   }, [isLoaded, user, loading, resumes, router]);
+
+  const copyApiKey = async () => {
+    if (!apiKey) return;
+    
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy API key:", error);
+    }
+  };
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -140,6 +195,16 @@ export default function DashboardPage() {
                 }`}
               >
                 🏆 Achievements
+              </button>
+              <button
+                onClick={() => setActiveTab("api-key")}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === "api-key"
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                🔑 API Key
               </button>
             </nav>
           </aside>
@@ -443,6 +508,57 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Tab Content: API Key */}
+      {activeTab === "api-key" && (
+        <div className="space-y-6">
+          <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <h2 className="text-2xl font-bold mb-4">🔑 API Key</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Connect your Chrome extension to sync data with your account
+            </p>
+            
+            <div className="space-y-6">
+              <div className="p-6 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How to Connect Your Extension</h3>
+                <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
+                  <li>Open your Chrome extension settings</li>
+                  <li>Enter your API endpoint: <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded text-xs">{typeof window !== 'undefined' ? window.location.origin : 'https://your-resaid-app.vercel.app'}</code></li>
+                  <li>Copy the API key below and paste it in the extension</li>
+                  <li>Click "Load from Account" in the extension to sync your profile</li>
+                </ol>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Your API Key
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={apiKey}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                      placeholder="Loading..."
+                    />
+                    <button
+                      onClick={copyApiKey}
+                      disabled={!apiKey}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {copied ? "✓ Copied!" : "📋 Copy"}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Keep this key secure. It allows access to your account data.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab Content: Profile Settings */}
       {activeTab === "profile" && (
         <div className="space-y-6">
@@ -461,7 +577,8 @@ export default function DashboardPage() {
                     <label className="block text-sm font-medium mb-1">First Name</label>
                     <input
                       type="text"
-                      defaultValue={user?.firstName || ""}
+                      value={profileData.firstName}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -469,7 +586,8 @@ export default function DashboardPage() {
                     <label className="block text-sm font-medium mb-1">Last Name</label>
                     <input
                       type="text"
-                      defaultValue={user?.lastName || ""}
+                      value={profileData.lastName}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -477,7 +595,8 @@ export default function DashboardPage() {
                     <label className="block text-sm font-medium mb-1">Email</label>
                     <input
                       type="email"
-                      defaultValue={user?.primaryEmailAddress?.emailAddress || ""}
+                      value={profileData.email}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -485,7 +604,8 @@ export default function DashboardPage() {
                     <label className="block text-sm font-medium mb-1">Phone</label>
                     <input
                       type="tel"
-                      defaultValue={resumes[0]?.parsedData?.personal?.phone || ""}
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="(555) 123-4567"
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -494,7 +614,8 @@ export default function DashboardPage() {
                     <label className="block text-sm font-medium mb-1">City</label>
                     <input
                       type="text"
-                      defaultValue={resumes[0]?.parsedData?.personal?.city || ""}
+                      value={profileData.city}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
                       placeholder="San Francisco"
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -503,8 +624,19 @@ export default function DashboardPage() {
                     <label className="block text-sm font-medium mb-1">State/Province</label>
                     <input
                       type="text"
-                      defaultValue=""
+                      value={profileData.state}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, state: e.target.value }))}
                       placeholder="California"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Country</label>
+                    <input
+                      type="text"
+                      value={profileData.country}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, country: e.target.value }))}
+                      placeholder="United States"
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -661,10 +793,41 @@ export default function DashboardPage() {
                 </button>
                 {!profileSaved ? (
                   <button
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
-                    onClick={() => setProfileSaved(true)}
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={async () => {
+                      setSavingProfile(true);
+                      try {
+                        const response = await fetch('/api/user/profile', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            firstName: profileData.firstName,
+                            lastName: profileData.lastName,
+                            email: profileData.email,
+                            phone: profileData.phone,
+                            location: `${profileData.city}, ${profileData.state}, ${profileData.country}`.replace(/, ,/g, '').replace(/^,|,$/g, '').trim(),
+                          }),
+                        });
+
+                        if (response.ok) {
+                          setProfileSaved(true);
+                          setTimeout(() => setProfileSaved(false), 3000);
+                        } else {
+                          console.error('Failed to save profile');
+                          alert('Failed to save profile. Please try again.');
+                        }
+                      } catch (error) {
+                        console.error('Error saving profile:', error);
+                        alert('Error saving profile. Please try again.');
+                      } finally {
+                        setSavingProfile(false);
+                      }
+                    }}
+                    disabled={savingProfile}
                   >
-                    Save Changes
+                    {savingProfile ? 'Saving...' : 'Save Changes'}
                   </button>
                 ) : (
                   <span className="px-6 py-2 text-green-600 font-semibold">Saved!</span>
