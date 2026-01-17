@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-export function ResumeUpload() {
+interface ResumeUploadProps {
+  onUploadSuccess?: () => void;
+}
+
+export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +78,11 @@ export function ResumeUpload() {
 
       setUploadStatus("success");
       console.log("Resume uploaded:", data.resume);
+      
+      // Call the success callback to notify parent component
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
     } catch (error) {
       console.error("Upload failed:", error);
       setUploadStatus("error");

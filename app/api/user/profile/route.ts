@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
@@ -127,6 +127,59 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { error: "Failed to fetch profile" },
       { status: 500, headers: CORS_HEADERS }
+    );
+  }
+}
+
+/**
+ * POST /api/user/profile
+ * Updates user's profile information from onboarding form
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { firstName, lastName, email, phone, location, yearsOfExperience, currentRole } = body;
+
+    // Find user by clerkId
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Update user profile information
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        firstName: firstName || user.firstName,
+        lastName: lastName || user.lastName,
+        email: email || user.email,
+      },
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Profile updated successfully",
+      user: {
+        id: updated.id,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
+      }
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 }
     );
   }
 }

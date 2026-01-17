@@ -145,14 +145,21 @@ function parsePersonal(personalLines: string[]): {
   const postalCode = postalMatch ? postalMatch[0] : null;
 
   // Extract name and split into first/last
-  const name = personalLines[0] || null;
+  let name = personalLines[0] || null;
   let firstName = null;
   let lastName = null;
 
   if (name) {
-    const nameParts = name.trim().split(/\s+/);
+    // Handle CamelCase names (e.g., "CamdynHamilton" → "Camdyn Hamilton")
+    // Split on capital letters that are followed by lowercase letters
+    const spacedName = name.replace(/([a-z])([A-Z])/g, '$1 $2');
+    
+    const nameParts = spacedName.trim().split(/\s+/);
     firstName = nameParts[0] || null;
     lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
+    
+    // Update name to the properly spaced version
+    name = spacedName;
   }
 
   return { 

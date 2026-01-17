@@ -10,6 +10,7 @@ import * as mammoth from "mammoth";
  * - No AI parsing here
  */
 
+
 export async function extractPdfText(buffer: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     const pdfParser = new PDFParser();
@@ -21,13 +22,17 @@ export async function extractPdfText(buffer: Buffer): Promise<string> {
         const lineMap = new Map<number, Array<{ x: number; text: string }>>();
 
         page.Texts.forEach((item) => {
-          const y = Math.round(item.y); // Round Y to group same lines
+          // Use tolerance of 0.2 to group text items that are close vertically
+          const y = Math.round(item.y * 5) / 5; // Round to nearest 0.2 for better grouping
           if (!lineMap.has(y)) {
             lineMap.set(y, []);
           }
+          const rawText = item.R[0].T;
+          const decodedText = decodeURIComponent(rawText);
+          console.log(`[PDF Extract] Y=${y.toFixed(2)}, X=${item.x.toFixed(2)}, Raw="${rawText}" → Decoded="${decodedText}"`);
           lineMap.get(y)!.push({
             x: item.x,
-            text: decodeURIComponent(item.R[0].T),
+            text: decodedText,
           });
         });
 
@@ -36,9 +41,10 @@ export async function extractPdfText(buffer: Buffer): Promise<string> {
           .sort((a, b) => a[0] - b[0])
           .map(([_, items]) => {
             // Sort items on same line by X position (left to right)
+            // Join items on same line with space - simpler approach
             return items.sort((a, b) => a.x - b.x)
               .map((item) => item.text)
-              .join(" "); // Join items on same line with space
+              .join(" "); // Always join with space
           })
           .filter((line) => line.trim()); // Remove empty lines
 
