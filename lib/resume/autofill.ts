@@ -62,10 +62,15 @@ export type AutofillData = z.infer<typeof AutofillDataSchema>;
  * This is the normalization layer for autofill features
  */
 export function resumeToAutofill(resume: Resume): AutofillData {
-  // Parse name
+  // Parse name (defensive: handle missing personal or name fields)
   let firstName: string | null = null;
   let lastName: string | null = null;
-  let fullName = resume.personal.name;
+  let fullName: string | null = null;
+  if (resume.personal && typeof resume.personal === 'object') {
+    fullName = resume.personal.name || null;
+  } else if ((resume as any).name) {
+    fullName = (resume as any).name;
+  }
 
   if (fullName) {
     const nameParts = fullName.trim().split(/\s+/);
@@ -106,7 +111,7 @@ export function resumeToAutofill(resume: Resume): AutofillData {
   let state: string | null = null;
   let country: string | null = null;
 
-  if (resume.personal.location) {
+    if (resume.personal && typeof resume.personal === 'object' && resume.personal.location) {
     const locationParts = resume.personal.location.split(",").map((p) => p.trim());
     if (locationParts.length >= 2) {
       city = locationParts[0];
@@ -121,9 +126,9 @@ export function resumeToAutofill(resume: Resume): AutofillData {
     firstName,
     lastName,
     fullName: fullName || null,
-    email: resume.personal.email || null,
-    phone: resume.personal.phone || null,
-    location: resume.personal.location || null,
+    email: resume.personal && typeof resume.personal === 'object' && resume.personal.email ? resume.personal.email : null,
+    phone: resume.personal && typeof resume.personal === 'object' && resume.personal.phone ? resume.personal.phone : null,
+    location: resume.personal && typeof resume.personal === 'object' && resume.personal.location ? resume.personal.location : null,
     city,
     state,
     country: country || null,

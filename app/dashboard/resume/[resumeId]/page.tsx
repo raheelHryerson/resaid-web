@@ -284,7 +284,7 @@ export default function ResumeReviewPage() {
                     Name
                   </p>
                   <p className="font-semibold">
-                    {resume.parsedData.personal.name || "Not provided"}
+                    {resume.parsedData.personal?.name || "Not provided"}
                   </p>
                 </div>
                 <div>
@@ -292,7 +292,7 @@ export default function ResumeReviewPage() {
                     Email
                   </p>
                   <p className="font-semibold">
-                    {resume.parsedData.personal.email || "Not provided"}
+                    {resume.parsedData.personal?.email || "Not provided"}
                   </p>
                 </div>
                 <div>
@@ -300,7 +300,7 @@ export default function ResumeReviewPage() {
                     Phone
                   </p>
                   <p className="font-semibold">
-                    {resume.parsedData.personal.phone || "Not provided"}
+                    {resume.parsedData.personal?.phone || "Not provided"}
                   </p>
                 </div>
                 <div>
@@ -308,7 +308,7 @@ export default function ResumeReviewPage() {
                     Location
                   </p>
                   <p className="font-semibold">
-                    {resume.parsedData.personal.location || "Not provided"}
+                    {resume.parsedData.personal?.location || "Not provided"}
                   </p>
                 </div>
               </>

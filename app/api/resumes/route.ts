@@ -86,6 +86,7 @@ export async function GET(request: Request) {
             experience: parsed.experience || [],
             education: parsed.education || [],
             createdAt: resume.createdAt,
+            parsedData: parsed, // <-- include full parsedData for onboarding auto-fill
           };
         }),
       },

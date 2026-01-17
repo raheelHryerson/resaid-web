@@ -1,6 +1,13 @@
+    // Utility: Insert spaces before capital letters in CamelCase
+    function spaceCamelCase(str: string | null | undefined): string | null {
+      if (!str) return null;
+      // Remove single-letter abbreviations (e.g., 'S.')
+      const noAbbrev = str.replace(/\b\w\./g, '').trim();
+      // Insert spaces before capital letters (but not at the start)
+      return noAbbrev.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2').replace(/\s+/g, ' ').trim();
+    }
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { parseResume } from "@/lib/resume-parser";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -98,23 +105,99 @@ export async function POST(request: NextRequest) {
     // Store the file path (signed URLs can be generated on-demand for downloads)
     const fileUrl = storagePath;
 
-    // Parse resume to extract skills, experience, education
-    console.log("Parsing resume...");
+    // Extract raw text and use AI to parse resume
+    console.log("Extracting raw text and parsing with AI...");
     let parsedData;
     let originalText = "";
     try {
       const { extractText } = await import("@/lib/resume/extractText");
       originalText = await extractText(buffer, file.type);
-      parsedData = await parseResume(buffer, file.type);
-      console.log("Resume parsed successfully:", parsedData);
+      const { parseResumeWithAI } = await import("@/lib/resume/parseResumeWithAI");
+      const aiData = await parseResumeWithAI(originalText);
+      if (!aiData) {
+        parsedData = {
+          personal: { name: null, email: null, phone: null, location: null },
+          skills: [],
+          experience: [],
+          education: [],
+        };
+      } else {
+        // Normalize: always wrap personal fields in a personal object
+        // Map experience and education fields to dashboard schema
+        const normalizedExperience = (aiData.experience ?? []).map((exp: any) => ({
+          title: spaceCamelCase(exp.title ?? null),
+          organization: spaceCamelCase(exp.organization ?? exp.company ?? null),
+          startDate: exp.startDate ?? null,
+          endDate: exp.endDate ?? null,
+          location: spaceCamelCase(exp.location ?? null),
+          bullets: Array.isArray(exp.bullets) ? exp.bullets.map(spaceCamelCase) : [],
+        }));
+        const normalizedEducation = (aiData.education ?? []).map((edu: any) => ({
+          credential: spaceCamelCase(edu.credential ?? edu.degree ?? null),
+          institution: spaceCamelCase(edu.institution ?? edu.school ?? null),
+          field: spaceCamelCase(edu.field ?? null),
+          startDate: edu.startDate ?? null,
+          endDate: edu.endDate ?? edu.year ?? null,
+        }));
+        // Name normalization: ignore single-letter parts, space out CamelCase
+        let rawName = aiData.personal?.name ?? aiData.name ?? null;
+        let name = spaceCamelCase(rawName);
+        if (name) {
+          // Remove single-letter words (likely abbreviations)
+          name = name.split(' ').filter(part => part.length > 1).join(' ');
+        }
+        parsedData = {
+          personal: {
+            name,
+            email: aiData.personal?.email ?? aiData.email ?? null,
+            phone: aiData.personal?.phone ?? aiData.phone ?? null,
+            location: spaceCamelCase(aiData.personal?.location ?? aiData.location ?? null),
+          },
+          skills: aiData.skills ?? [],
+          experience: normalizedExperience,
+          education: normalizedEducation,
+        };
+      }
+      console.log("AI resume parsed successfully (normalized):", parsedData);
     } catch (parseError) {
       console.error("Resume parsing error:", parseError);
       parsedData = {
-        personal: { name: null, email: null, phone: null, location: null },
+        personal: {
+          name: null,
+          email: null,
+          phone: null,
+          location: null,
+        },
         skills: [],
         experience: [],
         education: [],
       };
+    }
+
+    // Optionally, update user profile with parsed personal info (name, email, phone, location)
+    const userUpdate: Record<string, any> = {};
+    if (parsedData) {
+      if (parsedData.email && !user.email) userUpdate.email = parsedData.email;
+      if (parsedData.phone && !user.phone) userUpdate.phone = parsedData.phone;
+      if (parsedData.city && !user.city) userUpdate.city = parsedData.city;
+      if ((parsedData.province || parsedData.state) && !user.state) {
+        userUpdate.state = parsedData.province || parsedData.state;
+      }
+      if (parsedData.country && !user.country) userUpdate.country = parsedData.country;
+      // Split name into firstName and lastName if possible
+      if (parsedData.name && (!user.firstName || !user.lastName)) {
+        const nameParts = parsedData.name.split(/\s+/);
+        if (!user.firstName && nameParts.length > 0) userUpdate.firstName = nameParts[0];
+        if (!user.lastName && nameParts.length > 1) userUpdate.lastName = nameParts.slice(1).join(" ");
+      }
+    }
+    // Remove any invalid fields (like 'name') before updating
+    delete userUpdate.name;
+    if (Object.keys(userUpdate).length > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: userUpdate,
+      });
     }
 
     // PHASE 7: Create Resume record + version history (never overwrite)
@@ -151,6 +234,7 @@ export async function POST(request: NextRequest) {
           fileName: resume.fileName,
           fileUrl: resume.fileUrl,
           fileSize: resume.fileSize,
+          parsedData: resume.parsedData,
         },
       },
       { status: 200 }

@@ -19,6 +19,7 @@ interface Resume {
 }
 
 export default function DashboardPage() {
+    const [profileSaved, setProfileSaved] = useState(false);
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -519,69 +520,88 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Work Experience */}
+              {/* Work Experience - Multiple Entries */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Work Experience</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Current Employer</label>
-                    <input
-                      type="text"
-                      defaultValue={resumes[0]?.parsedData?.experience?.[0]?.organization || ""}
-                      placeholder="Company Name"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Current Job Title</label>
-                    <input
-                      type="text"
-                      defaultValue={resumes[0]?.parsedData?.experience?.[0]?.title || ""}
-                      placeholder="Software Engineer"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Years of Experience</label>
-                    <select
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select...</option>
-                      <option value="0-1">0-1 years</option>
-                      <option value="1-3">1-3 years</option>
-                      <option value="3-5">3-5 years</option>
-                      <option value="5-10">5-10 years</option>
-                      <option value="10+">10+ years</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Currently Employed?</label>
-                    <select
-                      defaultValue={resumes[0]?.parsedData?.experience?.[0]?.endDate ? "no" : "yes"}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Employment Start Date</label>
-                    <input
-                      type="text"
-                      defaultValue={resumes[0]?.parsedData?.experience?.[0]?.startDate || ""}
-                      placeholder="MM/YYYY"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Employment End Date</label>
-                    <input
-                      type="text"
-                      defaultValue={resumes[0]?.parsedData?.experience?.[0]?.endDate || "Present"}
-                      placeholder="MM/YYYY or Present"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                {Array.isArray(resumes[0]?.parsedData?.experience) && resumes[0].parsedData.experience.length > 0 ? (
+                  resumes[0].parsedData.experience.map((exp, idx) => (
+                    <div key={idx} className="mb-8 p-4 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800">
+                      <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Employer</label>
+                          <input
+                            type="text"
+                            defaultValue={exp.organization || ""}
+                            placeholder="Company Name"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Job Title</label>
+                          <input
+                            type="text"
+                            defaultValue={exp.title || ""}
+                            placeholder="Software Engineer"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Employment Start Date</label>
+                          <input
+                            type="text"
+                            defaultValue={exp.startDate || ""}
+                            placeholder="MM/YYYY"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Employment End Date</label>
+                          <input
+                            type="text"
+                            defaultValue={exp.endDate || "Present"}
+                            placeholder="MM/YYYY or Present"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <label className="block text-sm font-medium mb-1">Description / Responsibilities</label>
+                      <textarea
+                        defaultValue={Array.isArray(exp.bullets) ? exp.bullets.join("\n") : ""}
+                        placeholder="Enter job responsibilities or bullet points"
+                        rows={6}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No work experience found in resume.</p>
+                )}
+              </div>
+
+              {/* Years of Experience & Currently Employed - moved to bottom */}
+              <div className="grid md:grid-cols-2 gap-4 mt-8">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Years of Experience</label>
+                  <select
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="0-1">0-1 years</option>
+                    <option value="1-3">1-3 years</option>
+                    <option value="3-5">3-5 years</option>
+                    <option value="5-10">5-10 years</option>
+                    <option value="10+">10+ years</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Currently Employed?</label>
+                  <select
+                    defaultValue={resumes[0]?.parsedData?.experience?.[0]?.endDate ? "no" : "yes"}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
                 </div>
               </div>
 
@@ -639,9 +659,16 @@ export default function DashboardPage() {
                 <button className="px-6 py-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition">
                   Cancel
                 </button>
-                <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
-                  Save Changes
-                </button>
+                {!profileSaved ? (
+                  <button
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
+                    onClick={() => setProfileSaved(true)}
+                  >
+                    Save Changes
+                  </button>
+                ) : (
+                  <span className="px-6 py-2 text-green-600 font-semibold">Saved!</span>
+                )}
               </div>
             </div>
           </div>

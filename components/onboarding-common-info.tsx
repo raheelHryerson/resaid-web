@@ -10,16 +10,26 @@ interface CommonInfoFormProps {
 }
 
 export function OnboardingCommonInfo({ resumes, onComplete }: CommonInfoFormProps) {
+    // Extract data from first resume if available
+    const firstResume = resumes[0];
+    const resumeData = firstResume?.parsedData || {};
+  // ...existing code...
+
+  // Helper to split name
+  const nameParts = resumeData.personal?.name?.split(" ") || [""];
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    city: "",
-    state: "",
-    country: "",
-    yearsOfExperience: "",
-    currentRole: "",
+    firstName,
+    lastName,
+    email: resumeData.personal?.email || "",
+    phone: resumeData.personal?.phone || "",
+    city: resumeData.personal?.city || "",
+    state: resumeData.personal?.state || "",
+    country: resumeData.personal?.country || "",
+    yearsOfExperience: resumeData.personal?.yearsOfExperience || "",
+    currentRole: resumeData.personal?.currentRole || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -59,9 +69,7 @@ export function OnboardingCommonInfo({ resumes, onComplete }: CommonInfoFormProp
     }
   };
 
-  // Extract data from first resume if available
-  const firstResume = resumes[0];
-  const resumeData = firstResume?.parsedData || {};
+  // ...existing code...
 
   return (
     <motion.div
