@@ -88,7 +88,6 @@ export async function GET(request: Request) {
       id: resume.id,
       fileName: resume.fileName,
       parsedData: resume.parsedData,
-      content: resume.content,
       createdAt: resume.createdAt,
     }, { headers: CORS_HEADERS });
 

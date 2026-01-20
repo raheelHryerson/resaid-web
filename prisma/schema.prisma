@@ -16,6 +16,7 @@ model User {
   clerkId       String     @unique
   email         String     @unique
   firstName     String?
+  middleName    String?
   lastName      String?
   phone         String?
   city          String?
@@ -32,6 +33,7 @@ model User {
   resumes       Resume[]
   applications  Application[]
   apiKeys       ApiKey[]
+  subscriptions Subscription[]
 }
 
 // Resume model
@@ -119,4 +121,27 @@ model ApiKey {
 
   @@index([userId])
   @@index([key])
+}
+
+// Subscription model for Stripe
+model Subscription {
+  id                    String     @id @default(cuid())
+  userId                String
+  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  stripeSubscriptionId  String     @unique
+  stripeCustomerId      String
+  status                String     // active, canceled, past_due, incomplete, etc.
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  planId                String     // e.g., 'monthly', 'quarterly', 'yearly'
+  priceId               String     // Stripe price ID
+  currency              String     @default("usd")
+  
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
 }

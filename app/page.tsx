@@ -55,25 +55,22 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <main className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background dark:from-background dark:via-primary/10 dark:to-background">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800">
+      <nav className="sticky top-0 z-50 bg-background/80 dark:bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex items-center gap-2"
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg" />
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              ResAid
-            </span>
+            <img src="/icons/ResAid_logo.png" alt="ResAid Logo" className="h-8" />
           </motion.div>
           <div className="flex gap-3">
             <Button variant="ghost" className="hidden sm:flex" onClick={() => router.push("/sign-in")}>
               Sign In
             </Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-purple-500/25 transition-all" onClick={() => router.push("/sign-up")}>
+            <Button className="bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 transition-all duration-300" onClick={() => router.push("/sign-up")}>
               Get Started
             </Button>
           </div>
@@ -84,8 +81,9 @@ export default function Home() {
       <section className="relative overflow-hidden pt-20 pb-32 px-6 sm:pt-32 sm:pb-40">
         {/* Animated background */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-          <div className="absolute -bottom-8 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+          <div className="absolute -bottom-8 right-10 w-72 h-72 bg-primary/15 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-slow" />
         </div>
 
         <motion.div
@@ -99,10 +97,10 @@ export default function Home() {
               <motion.div
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20"
               >
-                <span className="w-2 h-2 bg-blue-600 rounded-full" />
-                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                <span className="w-2 h-2 bg-primary rounded-full" />
+                <span className="text-sm font-semibold text-primary">
                   AI-Powered Job Applications
                 </span>
               </motion.div>
@@ -110,12 +108,12 @@ export default function Home() {
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
               Apply{" "}
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
                 faster.
               </span>
               <br />
               Answer{" "}
-              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary/80 via-primary to-primary/60 bg-clip-text text-transparent">
                 better.
               </span>
             </h1>
@@ -133,7 +131,7 @@ export default function Home() {
           >
             <Button
               size="lg"
-              className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-blue-500/25 transition-all text-base"
+              className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 transition-all text-base"
               onClick={() => router.push("/sign-up")}
             >
               Get Started Free <ArrowRight size={18} />
@@ -183,8 +181,8 @@ export default function Home() {
                   transition={{ delay: idx * 0.1 }}
                   className={`w-full p-6 rounded-xl text-left transition-all ${
                     activeDemo === idx
-                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-purple-500/25"
-                      : "bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700"
+                      ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25"
+                      : "bg-muted hover:bg-muted/80"
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -220,10 +218,10 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
-              className="bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-8 min-h-96 flex items-center justify-center"
+              className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/10 dark:to-primary/5 rounded-2xl p-8 min-h-96 flex items-center justify-center"
             >
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-2xl mx-auto flex items-center justify-center">
                   <Workflow size={40} className="text-white" />
                 </div>
                 <div>
@@ -264,13 +262,13 @@ export default function Home() {
                 icon: Zap,
                 title: "Lightning Fast",
                 description: "Apply to jobs in minutes, not hours. Autofill with one click.",
-                color: "from-blue-600 to-cyan-600",
+                color: "from-primary to-primary/80",
               },
               {
                 icon: Sparkles,
                 title: "AI-Powered",
                 description: "Intelligent answers tailored to each job posting.",
-                color: "from-purple-600 to-pink-600",
+                color: "from-primary/80 to-primary/60",
               },
               {
                 icon: Shield,
@@ -301,7 +299,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
         <div className="max-w-6xl mx-auto">
           <motion.div
             variants={containerVariants}
@@ -383,7 +381,7 @@ export default function Home() {
                 className="p-6 rounded-xl bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600"
               >
                 <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                  <CheckCircle2 size={20} className="text-blue-600" />
+                  <CheckCircle2 size={20} className="text-primary" />
                   {faq.q}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 ml-7">{faq.a}</p>
@@ -407,7 +405,7 @@ export default function Home() {
           <p className="text-xl text-gray-600 dark:text-gray-300">
             Join thousands of job seekers using ResAid to land their dream jobs.
           </p>
-          <Button className="px-8 py-6 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-purple-500/25" onClick={() => router.push("/sign-up")}>
+          <Button className="px-8 py-6 text-lg bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25" onClick={() => router.push("/sign-up")}>
             Get Started Free
           </Button>
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -422,7 +420,7 @@ export default function Home() {
           <div className="grid sm:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg" />
+                <div className="w-6 h-6 bg-gradient-to-br from-primary to-primary/80 rounded-lg" />
                 <span className="font-bold">ResAid</span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">

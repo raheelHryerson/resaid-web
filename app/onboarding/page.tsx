@@ -60,7 +60,7 @@ export default function OnboardingPage() {
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg" />
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg" />
             <span className="text-xl font-bold">ResAid</span>
           </div>
           <UserButton afterSignOutUrl="/" />
@@ -72,21 +72,21 @@ export default function OnboardingPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${currentStep === "resume" ? "bg-blue-600 text-white" : "bg-green-600 text-white"}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${currentStep === "resume" ? "bg-primary text-primary-foreground" : "bg-green-600 text-white"}`}>
                 ✓
               </div>
               <span className="font-medium">Upload Resume</span>
             </div>
-            <div className={`w-12 h-1 transition-all ${["info", "extension"].includes(currentStep) ? "bg-blue-600" : "bg-gray-300"}`} />
+            <div className={`w-12 h-1 transition-all ${["info", "extension"].includes(currentStep) ? "bg-primary" : "bg-gray-300"}`} />
             <div className="flex items-center gap-4">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${currentStep === "info" ? "bg-blue-600 text-white" : ["extension"].includes(currentStep) ? "bg-green-600 text-white" : "bg-gray-300 text-gray-600"}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${currentStep === "info" ? "bg-primary text-primary-foreground" : ["extension"].includes(currentStep) ? "bg-green-600 text-white" : "bg-gray-300 text-gray-600"}`}>
                 {["extension"].includes(currentStep) ? "✓" : "2"}
               </div>
               <span className={currentStep !== "resume" ? "font-medium" : "text-gray-500"}>Complete Profile</span>
             </div>
-            <div className={`w-12 h-1 transition-all ${currentStep === "extension" ? "bg-blue-600" : "bg-gray-300"}`} />
+            <div className={`w-12 h-1 transition-all ${currentStep === "extension" ? "bg-primary" : "bg-gray-300"}`} />
             <div className="flex items-center gap-4">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${currentStep === "extension" ? "bg-blue-600 text-white" : "bg-gray-300 text-gray-600"}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-all ${currentStep === "extension" ? "bg-primary text-primary-foreground" : "bg-gray-300 text-gray-600"}`}>
                 3
               </div>
               <span className={currentStep === "extension" ? "font-medium" : "text-gray-500"}>Download Extension</span>
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleMoveToInfoStep}
                   disabled={loading || resumes.length === 0}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg transition-all"
                 >
                   Continue →
                 </button>
@@ -186,7 +186,7 @@ export default function OnboardingPage() {
                   href="https://chromewebstore.google.com/detail/resaid/placeholder"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
+                  className="inline-block px-6 py-3 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all font-semibold"
                 >
                   Get Extension on Chrome Store →
                 </a>
@@ -205,7 +205,7 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     onClick={handleCompleteOnboarding}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
+                    className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all font-semibold"
                   >
                     Go to Dashboard →
                   </button>

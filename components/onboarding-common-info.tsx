@@ -214,7 +214,7 @@ export function OnboardingCommonInfo({ resumes, onComplete }: CommonInfoFormProp
           <Button
             type="submit"
             disabled={isSubmitting || !formData.firstName || !formData.lastName || !formData.email}
-            className="flex-1 py-6 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-6 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Saving..." : "Complete Onboarding"}
           </Button>

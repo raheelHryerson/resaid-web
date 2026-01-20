@@ -122,12 +122,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800">
+    <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background dark:from-background dark:via-primary/10 dark:to-background">
+      <nav className="sticky top-0 z-50 bg-background/80 dark:bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg" />
-            <span className="text-xl font-bold">ResAid</span>
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
+              <img src="/icons/ResAid_logo.png" alt="ResAid Logo" className="h-8" />
+            </div>
+            <div className="flex items-center gap-6">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-foreground border-b-2 border-primary pb-1"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground pb-1 hover:border-b-2 hover:border-primary/50 transition-colors"
+              >
+                Pricing
+              </Link>
+            </div>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -150,8 +165,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab("overview")}
                 className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
                   activeTab === "overview"
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 📊 Overview
@@ -160,8 +175,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab("applications")}
                 className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
                   activeTab === "applications"
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 💼 Applications
@@ -170,8 +185,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab("resume-rating")}
                 className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
                   activeTab === "resume-rating"
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 ⭐ Resume Rating
@@ -180,8 +195,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab("profile")}
                 className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
                   activeTab === "profile"
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 ⚙️ Profile Settings
@@ -190,8 +205,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab("achievements")}
                 className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
                   activeTab === "achievements"
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 🏆 Achievements
@@ -200,8 +215,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab("api-key")}
                 className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
                   activeTab === "api-key"
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 🔑 API Key
@@ -228,7 +243,7 @@ export default function DashboardPage() {
                   </p>
                   <button 
                     onClick={() => setShowUploadModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+                    className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all">
                     Upload Resume
                   </button>
                 </>
@@ -291,7 +306,7 @@ export default function DashboardPage() {
                       </p>
                       <Link
                         href={`/dashboard/resume/${resume.id}`}
-                        className="mt-3 inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+                        className="mt-3 inline-block px-4 py-2 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90 transition"
                       >
                         View & Edit →
                       </Link>
@@ -299,7 +314,7 @@ export default function DashboardPage() {
                   ))}
                   <button 
                     onClick={() => setShowUploadModal(true)}
-                    className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+                    className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all">
                     Upload Another Resume
                   </button>
                 </div>
@@ -316,7 +331,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                  <span className="font-bold text-2xl text-blue-600">0</span>
+                  <span className="font-bold text-2xl text-primary">0</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Completed</span>
@@ -347,7 +362,7 @@ export default function DashboardPage() {
             
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">No applications tracked yet</p>
-              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all">
+              <button className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all">
                 Add Your First Application
               </button>
             </div>
@@ -369,16 +384,16 @@ export default function DashboardPage() {
                 <p className="text-gray-500 mb-4">Upload a resume first to get it rated</p>
                 <button 
                   onClick={() => setShowUploadModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all"
                 >
                   Upload Resume
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                  <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Coming Soon!</h3>
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-6">
+                  <h3 className="font-semibold text-primary mb-2">Coming Soon!</h3>
+                  <p className="text-sm text-primary/80">
                     Resume rating and AI-powered analysis will be available soon. Stay tuned!
                   </p>
                 </div>
@@ -544,7 +559,7 @@ export default function DashboardPage() {
                     <button
                       onClick={copyApiKey}
                       disabled={!apiKey}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       {copied ? "✓ Copied!" : "📋 Copy"}
                     </button>
@@ -656,7 +671,7 @@ export default function DashboardPage() {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Work Experience</h3>
                 {Array.isArray(resumes[0]?.parsedData?.experience) && resumes[0].parsedData.experience.length > 0 ? (
-                  resumes[0].parsedData.experience.map((exp, idx) => (
+                  resumes[0].parsedData.experience.map((exp: any, idx: number) => (
                     <div key={idx} className="mb-8 p-4 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800">
                       <div className="grid md:grid-cols-2 gap-4 mb-4">
                         <div>
@@ -793,7 +808,7 @@ export default function DashboardPage() {
                 </button>
                 {!profileSaved ? (
                   <button
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={async () => {
                       setSavingProfile(true);
                       try {

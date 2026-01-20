@@ -177,16 +177,17 @@ export async function POST(request: NextRequest) {
     // Optionally, update user profile with parsed personal info (name, email, phone, location)
     const userUpdate: Record<string, any> = {};
     if (parsedData) {
-      if (parsedData.email && !user.email) userUpdate.email = parsedData.email;
-      if (parsedData.phone && !user.phone) userUpdate.phone = parsedData.phone;
-      if (parsedData.city && !user.city) userUpdate.city = parsedData.city;
-      if ((parsedData.province || parsedData.state) && !user.state) {
-        userUpdate.state = parsedData.province || parsedData.state;
+      const data = parsedData as any;
+      if (data.personal?.email && !user.email) userUpdate.email = data.personal.email;
+      if (data.personal?.phone && !user.phone) userUpdate.phone = data.personal.phone;
+      if (data.personal?.location && !user.city) userUpdate.city = data.personal.location;
+      if ((data.province || data.state) && !user.state) {
+        userUpdate.state = data.province || data.state;
       }
-      if (parsedData.country && !user.country) userUpdate.country = parsedData.country;
+      if (data.country && !user.country) userUpdate.country = data.country;
       // Split name into firstName and lastName if possible
-      if (parsedData.name && (!user.firstName || !user.lastName)) {
-        const nameParts = parsedData.name.split(/\s+/);
+      if (data.personal?.name && (!user.firstName || !user.lastName)) {
+        const nameParts = data.personal.name.split(/\s+/);
         if (!user.firstName && nameParts.length > 0) userUpdate.firstName = nameParts[0];
         if (!user.lastName && nameParts.length > 1) userUpdate.lastName = nameParts.slice(1).join(" ");
       }

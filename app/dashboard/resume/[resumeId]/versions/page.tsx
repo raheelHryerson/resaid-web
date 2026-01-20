@@ -58,7 +58,7 @@ export default function VersionsPage() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <Link
             href={`/dashboard/resume/${resumeId}`}
-            className="text-blue-600 hover:text-blue-700"
+            className="text-primary hover:text-primary/80"
           >
             ← Back to Resume
           </Link>

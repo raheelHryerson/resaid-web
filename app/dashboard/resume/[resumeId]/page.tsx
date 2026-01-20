@@ -129,7 +129,7 @@ export default function ResumeReviewPage() {
       <div className="bg-white dark:bg-slate-800 shadow">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <div>
-            <Link href="/dashboard" className="text-blue-600 hover:text-blue-700">
+            <Link href="/dashboard" className="text-primary hover:text-primary/80">
               ← Back to Dashboard
             </Link>
             <h1 className="text-2xl font-bold mt-2">{resume.fileName}</h1>
@@ -180,7 +180,7 @@ export default function ResumeReviewPage() {
             <>
               <button
                 onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 ✏️ Edit Parsed Data
               </button>

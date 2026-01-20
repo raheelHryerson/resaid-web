@@ -112,7 +112,7 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
         onDrop={handleDrop}
       >
         {/* Background gradient decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-purple-400/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 pointer-events-none" />
 
         <div className="relative p-8 sm:p-12 space-y-6">
           <motion.div
@@ -133,7 +133,7 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center"
+                className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center"
               >
                 <Upload className="w-8 h-8 text-white" />
               </motion.div>
@@ -199,7 +199,7 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
               className="bg-white dark:bg-slate-700 rounded-xl p-4 border border-gray-200 dark:border-slate-600"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-bold">
                     {file.name.split(".").pop()?.toUpperCase() || "FILE"}
                   </span>
@@ -222,7 +222,7 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
           <Button
             onClick={handleAnalyze}
             disabled={!file || isLoading}
-            className="w-full py-6 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-6 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <motion.span
