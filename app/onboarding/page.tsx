@@ -60,8 +60,7 @@ export default function OnboardingPage() {
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg" />
-            <span className="text-xl font-bold">ResAid</span>
+            <img src="/icons/resAid_logo.png" alt="ResAid Logo" className="h-8" />
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -96,7 +95,7 @@ export default function OnboardingPage() {
 
         <div className="space-y-8">
           <div>
-            <h1 className="text-4xl font-bold">Welcome, {user?.firstName}! 🎉</h1>
+            <h1 className="text-4xl font-bold">Welcome, {user?.firstName}!</h1>
             <p className="text-gray-600 dark:text-gray-400">
               {currentStep === "resume" 
                 ? "Let's get started by uploading your resume." 

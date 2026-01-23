@@ -235,6 +235,12 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
               "Analyze Resume"
             )}
           </Button>
+
+          {isLoading && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
+              This may take up to 1 minute
+            </p>
+          )}
         </div>
       </div>
     </motion.div>

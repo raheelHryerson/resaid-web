@@ -161,7 +161,7 @@ export default function ResumeReviewPage() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
             <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-              ℹ️ Suggestions
+              Suggestions
             </h3>
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
               {validation.warnings.map((item, i) => (
@@ -182,13 +182,13 @@ export default function ResumeReviewPage() {
                 onClick={() => setEditing(true)}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
-                ✏️ Edit Parsed Data
+                Edit Parsed Data
               </button>
               <Link
                 href={`/dashboard/resume/${resumeId}/versions`}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 inline-block"
               >
-                📊 View Versions
+                View Versions
               </Link>
             </>
           ) : (
@@ -198,7 +198,7 @@ export default function ResumeReviewPage() {
                 disabled={saving}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
-                {saving ? "Saving..." : "✓ Save Changes"}
+                {saving ? "Saving..." : "Save Changes"}
               </button>
               <button
                 onClick={() => {
@@ -207,7 +207,7 @@ export default function ResumeReviewPage() {
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
-                ✕ Cancel
+                Cancel
               </button>
             </>
           )}
@@ -323,13 +323,56 @@ export default function ResumeReviewPage() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {editedData.skills.map((skill, i) => (
-              <span
-                key={i}
-                className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
-              >
-                {skill}
-              </span>
+              editing ? (
+                <div key={i} className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={skill}
+                    onChange={(e) => {
+                      const updated = [...editedData.skills];
+                      updated[i] = e.target.value;
+                      setEditedData({
+                        ...editedData,
+                        skills: updated,
+                      });
+                    }}
+                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm border-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={() => {
+                      const updated = editedData.skills.filter((_, idx) => idx !== i);
+                      setEditedData({
+                        ...editedData,
+                        skills: updated,
+                      });
+                    }}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <span
+                  key={i}
+                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                >
+                  {skill}
+                </span>
+              )
             ))}
+            {editing && (
+              <button
+                onClick={() => {
+                  setEditedData({
+                    ...editedData,
+                    skills: [...editedData.skills, ""],
+                  });
+                }}
+                className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm hover:bg-green-200 dark:hover:bg-green-800"
+              >
+                + Add Skill
+              </button>
+            )}
           </div>
         </div>
 
@@ -382,15 +425,103 @@ export default function ResumeReviewPage() {
                   )}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {exp.startDate} - {exp.endDate || "Present"}
+                  {editing ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Start Date"
+                        value={exp.startDate || ""}
+                        onChange={(e) => {
+                          const updated = [...editedData.experience];
+                          updated[i].startDate = e.target.value;
+                          setEditedData({
+                            ...editedData,
+                            experience: updated,
+                          });
+                        }}
+                        className="p-1 border rounded text-sm dark:bg-slate-700 dark:border-slate-600"
+                      />
+                      <span>-</span>
+                      <input
+                        type="text"
+                        placeholder="End Date"
+                        value={exp.endDate || ""}
+                        onChange={(e) => {
+                          const updated = [...editedData.experience];
+                          updated[i].endDate = e.target.value;
+                          setEditedData({
+                            ...editedData,
+                            experience: updated,
+                          });
+                        }}
+                        className="p-1 border rounded text-sm dark:bg-slate-700 dark:border-slate-600"
+                      />
+                    </div>
+                  ) : (
+                    `${exp.startDate || ""} - ${exp.endDate || "Present"}`
+                  )}
                 </div>
-                {exp.bullets.length > 0 && (
-                  <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                    {exp.bullets.map((bullet, j) => (
-                      <li key={j}>• {bullet}</li>
-                    ))}
-                  </ul>
-                )}
+                <div className="mt-2">
+                  {editing ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Bullets:</span>
+                        <button
+                          onClick={() => {
+                            const updated = [...editedData.experience];
+                            updated[i].bullets = [...(updated[i].bullets || []), ""];
+                            setEditedData({
+                              ...editedData,
+                              experience: updated,
+                            });
+                          }}
+                          className="text-green-600 hover:text-green-800 text-sm"
+                        >
+                          + Add Bullet
+                        </button>
+                      </div>
+                      {exp.bullets.map((bullet, j) => (
+                        <div key={j} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Bullet point"
+                            value={bullet}
+                            onChange={(e) => {
+                              const updated = [...editedData.experience];
+                              updated[i].bullets[j] = e.target.value;
+                              setEditedData({
+                                ...editedData,
+                                experience: updated,
+                              });
+                            }}
+                            className="flex-1 p-1 border rounded text-sm dark:bg-slate-700 dark:border-slate-600"
+                          />
+                          <button
+                            onClick={() => {
+                              const updated = [...editedData.experience];
+                              updated[i].bullets = updated[i].bullets.filter((_, idx) => idx !== j);
+                              setEditedData({
+                                ...editedData,
+                                experience: updated,
+                              });
+                            }}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    exp.bullets.length > 0 && (
+                      <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                        {exp.bullets.map((bullet, j) => (
+                          <li key={j}>• {bullet}</li>
+                        ))}
+                      </ul>
+                    )
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -445,11 +576,50 @@ export default function ResumeReviewPage() {
                   )}
                 </div>
                 {edu.field && (
-                  <div className="text-sm text-gray-500">{edu.field}</div>
+                  <div className="text-sm text-gray-500">
+                    {editing ? (
+                      <input
+                        type="text"
+                        placeholder="Field of Study"
+                        value={edu.field || ""}
+                        onChange={(e) => {
+                          const updated = [...editedData.education];
+                          updated[i].field = e.target.value;
+                          setEditedData({
+                            ...editedData,
+                            education: updated,
+                          });
+                        }}
+                        className="w-full p-1 border rounded text-sm dark:bg-slate-700 dark:border-slate-600"
+                      />
+                    ) : (
+                      edu.field
+                    )}
+                  </div>
                 )}
-                {edu.endDate && (
-                  <div className="text-sm text-gray-500">Graduated: {edu.endDate}</div>
-                )}
+                <div className="text-sm text-gray-500">
+                  {editing ? (
+                    <div className="flex gap-2 items-center">
+                      <span>Graduation:</span>
+                      <input
+                        type="text"
+                        placeholder="End Date"
+                        value={edu.endDate || ""}
+                        onChange={(e) => {
+                          const updated = [...editedData.education];
+                          updated[i].endDate = e.target.value;
+                          setEditedData({
+                            ...editedData,
+                            education: updated,
+                          });
+                        }}
+                        className="p-1 border rounded text-sm dark:bg-slate-700 dark:border-slate-600"
+                      />
+                    </div>
+                  ) : (
+                    edu.endDate && `Graduated: ${edu.endDate}`
+                  )}
+                </div>
               </div>
             ))}
           </div>

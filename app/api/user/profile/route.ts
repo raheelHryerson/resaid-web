@@ -74,17 +74,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404, headers: CORS_HEADERS });
     }
 
-    // Get the most recent resume
+    // Get the most recent resume (optional for profile data)
     const resume = user.resumes[0];
 
-    if (!resume) {
-      return NextResponse.json({ 
-        error: "No resume found. Please upload a resume first." 
-      }, { status: 404, headers: CORS_HEADERS });
-    }
-
-    // Extract profile data from resume's parsedData
-    const parsedData = (resume.parsedData as any) || { personal: {} };
+    // Extract profile data from resume's parsedData (if available)
+    const parsedData = resume ? ((resume.parsedData as any) || { personal: {} }) : { personal: {} };
     const personal = parsedData.personal || {};
     const experience = parsedData.experience || [];
 
@@ -163,6 +157,20 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== user.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: email },
+      });
+
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Email address is already in use" },
+          { status: 400, headers: CORS_HEADERS }
+        );
+      }
     }
 
     // Update user profile information

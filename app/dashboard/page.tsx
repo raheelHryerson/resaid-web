@@ -6,6 +6,19 @@ import { useState, useEffect } from "react";
 import { ResumeUpload } from "@/components/resume-upload";
 import Link from "next/link";
 
+interface Application {
+  id: string;
+  jobUrl: string;
+  companyName: string;
+  jobTitle: string;
+  jobDescription?: string;
+  status: string;
+  createdAt: string;
+  resume: {
+    fileName: string;
+  };
+}
+
 interface Resume {
   id: string;
   fileName: string;
@@ -34,6 +47,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string>("");
@@ -48,6 +62,38 @@ export default function DashboardPage() {
           const resumeData = await resumeResponse.json();
           setResumes(resumeData.resumes || []);
         }
+
+        // Fetch applications
+        const applicationsResponse = await fetch("/api/applications");
+        if (applicationsResponse.ok) {
+          const applicationsData = await applicationsResponse.json();
+          setApplications(applicationsData.applications || []);
+        }
+
+        // Fetch saved profile data
+        const profileResponse = await fetch("/api/user/profile");
+        if (profileResponse.ok) {
+          const responseData = await profileResponse.json();
+          const profileData = responseData.profile || {};
+          setProfileData({
+            firstName: profileData.firstName || "",
+            lastName: profileData.lastName || "",
+            email: profileData.email || "",
+            phone: profileData.phone || "",
+            city: profileData.city || "",
+            state: profileData.province || "",
+            country: profileData.country || "",
+          });        } else {
+          // Fallback to Clerk data if profile API fails
+          setProfileData({
+            firstName: user?.firstName || "",
+            lastName: user?.lastName || "",
+            email: user?.primaryEmailAddress?.emailAddress || "",
+            phone: "",
+            city: "",
+            state: "",
+            country: "",
+          });        }
 
         // Fetch API key
         const apiKeyResponse = await fetch("/api/user/api-key");
@@ -67,20 +113,7 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  // Initialize profile data when user and resumes are loaded
-  useEffect(() => {
-    if (user && resumes.length >= 0) { // resumes might be empty array
-      setProfileData({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.primaryEmailAddress?.emailAddress || "",
-        phone: resumes[0]?.parsedData?.personal?.phone || "",
-        city: resumes[0]?.parsedData?.personal?.city || "",
-        state: resumes[0]?.parsedData?.personal?.province || "",
-        country: resumes[0]?.parsedData?.personal?.country || "",
-      });
-    }
-  }, [user, resumes]);
+  // Profile data is now loaded in fetchData useEffect above
 
   // Handle URL parameters for tab selection
   useEffect(() => {
@@ -169,7 +202,7 @@ export default function DashboardPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                📊 Overview
+                Overview
               </button>
               <button
                 onClick={() => setActiveTab("applications")}
@@ -179,7 +212,7 @@ export default function DashboardPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                💼 Applications
+                Applications
               </button>
               <button
                 onClick={() => setActiveTab("resume-rating")}
@@ -189,7 +222,7 @@ export default function DashboardPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                ⭐ Resume Rating
+                Resume Rating
               </button>
               <button
                 onClick={() => setActiveTab("profile")}
@@ -199,7 +232,7 @@ export default function DashboardPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                ⚙️ Profile Settings
+                Profile Settings
               </button>
               <button
                 onClick={() => setActiveTab("achievements")}
@@ -209,7 +242,7 @@ export default function DashboardPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                🏆 Achievements
+                Achievements
               </button>
               <button
                 onClick={() => setActiveTab("api-key")}
@@ -219,7 +252,7 @@ export default function DashboardPage() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                🔑 API Key
+                API Key
               </button>
             </nav>
           </aside>
@@ -232,7 +265,7 @@ export default function DashboardPage() {
               <div className="grid md:grid-cols-2 gap-6">
             {/* Resume Section */}
             <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-              <h2 className="text-2xl font-bold mb-4">📄 Resumes</h2>
+              <h2 className="text-2xl font-bold mb-4">Resumes</h2>
               
               {loading ? (
                 <p className="text-gray-500">Loading resumes...</p>
@@ -249,7 +282,7 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  {resumes.map((resume) => (
+                  {resumes.slice(0, 3).map((resume) => (
                     <div key={resume.id} className="p-4 bg-blue-50 dark:bg-slate-700 rounded-lg">
                       <h3 className="font-semibold text-lg mb-2">{resume.fileName}</h3>
                       
@@ -323,19 +356,19 @@ export default function DashboardPage() {
 
             {/* Applications Section */}
             <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-              <h2 className="text-2xl font-bold mb-4">💼 Quick Stats</h2>
+              <h2 className="text-2xl font-bold mb-4">Quick Stats</h2>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Total Applications</span>
-                  <span className="font-bold text-2xl">0</span>
+                  <span className="font-bold text-2xl">{applications.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                  <span className="font-bold text-2xl text-primary">0</span>
+                  <span className="font-bold text-2xl text-primary">{applications.filter(app => app.status === 'draft' || app.status === 'submitted').length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Completed</span>
-                  <span className="font-bold text-2xl text-green-600">0</span>
+                  <span className="font-bold text-2xl text-green-600">{applications.filter(app => app.status === 'accepted').length}</span>
                 </div>
               </div>
             </div>
@@ -344,9 +377,17 @@ export default function DashboardPage() {
           {/* Chrome Extension Info */}
           <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
             <h2 className="text-2xl font-bold mb-2">🔌 Chrome Extension</h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               The ResAid Chrome extension now works fully locally — no API key required. Use onboarding or the Dashboard to upload a resume, then enable autofill from the extension popup.
             </p>
+            <a
+              href="https://chrome.google.com/webstore"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Get Chrome Extension →
+            </a>
           </div>
         </div>
       )}
@@ -355,17 +396,47 @@ export default function DashboardPage() {
       {activeTab === "applications" && (
         <div className="space-y-6">
           <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <h2 className="text-2xl font-bold mb-4">📝 Job Applications Tracker</h2>
+            <h2 className="text-2xl font-bold mb-4">Job Applications Tracker</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Track all your job applications in one place
             </p>
-            
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No applications tracked yet</p>
-              <button className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg transition-all">
-                Add Your First Application
-              </button>
-            </div>
+
+            {applications.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 mb-4">Applications will be automatically tracked when you use the Chrome extension</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {applications.map((application) => (
+                  <div key={application.id} className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg">{application.jobTitle}</h3>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        application.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                        application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        application.status === 'submitted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                      }`}>
+                        {application.status}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 mb-2">{application.companyName}</p>
+                    <p className="text-sm text-gray-500 mb-2">Resume: {application.resume.fileName}</p>
+                    <div className="flex justify-between items-center text-xs text-gray-500">
+                      <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
+                      <a
+                        href={application.jobUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary/80"
+                      >
+                        View Job →
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -374,7 +445,7 @@ export default function DashboardPage() {
       {activeTab === "resume-rating" && (
         <div className="space-y-6">
           <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <h2 className="text-2xl font-bold mb-4">⭐ Resume Rating & Analysis</h2>
+            <h2 className="text-2xl font-bold mb-4">Resume Rating & Analysis</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Get AI-powered feedback on your resume to improve your chances
             </p>
@@ -422,7 +493,7 @@ export default function DashboardPage() {
       {activeTab === "achievements" && (
         <div className="space-y-6">
           <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <h2 className="text-2xl font-bold mb-4">🏆 Achievements</h2>
+            <h2 className="text-2xl font-bold mb-4">Achievements</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Unlock accomplishments as you progress in your job search journey
             </p>
@@ -442,7 +513,7 @@ export default function DashboardPage() {
                       Upload your first resume
                     </p>
                     {resumes.length > 0 && (
-                      <p className="text-xs text-green-600 dark:text-green-400 mt-2 font-medium">✓ Unlocked!</p>
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-2 font-medium">Unlocked!</p>
                     )}
                   </div>
                 </div>
@@ -527,7 +598,7 @@ export default function DashboardPage() {
       {activeTab === "api-key" && (
         <div className="space-y-6">
           <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <h2 className="text-2xl font-bold mb-4">🔑 API Key</h2>
+            <h2 className="text-2xl font-bold mb-4">API Key</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Connect your Chrome extension to sync data with your account
             </p>
@@ -561,7 +632,7 @@ export default function DashboardPage() {
                       disabled={!apiKey}
                       className="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
-                      {copied ? "✓ Copied!" : "📋 Copy"}
+                      {copied ? "Copied!" : "Copy"}
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -578,7 +649,7 @@ export default function DashboardPage() {
       {activeTab === "profile" && (
         <div className="space-y-6">
           <div className="p-8 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-            <h2 className="text-2xl font-bold mb-4">⚙️ Profile Settings</h2>
+            <h2 className="text-2xl font-bold mb-4">Profile Settings</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Manage your personal information and preferences
             </p>
@@ -651,15 +722,6 @@ export default function DashboardPage() {
                       type="text"
                       value={profileData.country}
                       onChange={(e) => setProfileData(prev => ({ ...prev, country: e.target.value }))}
-                      placeholder="United States"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Country</label>
-                    <input
-                      type="text"
-                      defaultValue={resumes[0]?.parsedData?.personal?.country || ""}
                       placeholder="United States"
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />

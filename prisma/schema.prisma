@@ -103,6 +103,7 @@ model Application {
 
   @@index([userId])
   @@index([resumeId])
+  @@unique([userId, jobUrl]) // Prevent duplicate applications to the same job
 }
 
 // API Key model - for extension authentication
