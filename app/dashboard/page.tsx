@@ -364,11 +364,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                  <span className="font-bold text-2xl text-primary">{applications.filter(app => app.status === 'draft' || app.status === 'submitted').length}</span>
+                  <span className="font-bold text-2xl text-primary">{applications.filter(app => app.status === 'submitted' || app.status === 'draft').length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Completed</span>
-                  <span className="font-bold text-2xl text-green-600">{applications.filter(app => app.status === 'accepted').length}</span>
+                  <span className="font-bold text-2xl text-green-600">{applications.filter(app => app.status === 'accepted' || app.status === 'rejected').length}</span>
                 </div>
               </div>
             </div>

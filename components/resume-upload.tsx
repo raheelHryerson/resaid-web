@@ -221,10 +221,12 @@ export function ResumeUpload({ onUploadSuccess }: ResumeUploadProps) {
 
           <Button
             onClick={handleAnalyze}
-            disabled={!file || isLoading}
+            disabled={!file || isLoading || uploadStatus === "success"}
             className="w-full py-6 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
+            {uploadStatus === "success" ? (
+              "Resume Analyzed ✓"
+            ) : isLoading ? (
               <motion.span
                 animate={{ opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 1.5, repeat: Infinity }}

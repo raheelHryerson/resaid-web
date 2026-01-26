@@ -116,7 +116,7 @@ export default function OnboardingPage() {
               className="space-y-6"
             >
               <div className="p-6 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-                <h2 className="text-2xl font-bold mb-4">📄 Upload Your Resume</h2>
+                <h2 className="text-2xl font-bold mb-4">Upload Your Resume</h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   Upload your resume. We'll analyze it to extract your skills, experience, and education.
                 </p>
