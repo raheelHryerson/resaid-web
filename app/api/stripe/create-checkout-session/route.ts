@@ -15,36 +15,55 @@ const PRICE_IDS = {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Starting checkout session creation...');
+
     const { userId } = await auth();
+    console.log('Auth result:', { userId: userId ? 'present' : 'missing' });
+
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('No user ID from auth');
+      return NextResponse.json({ error: 'Unauthorized - Please sign in' }, { status: 401 });
     }
 
-    const { plan } = await request.json();
+    const body = await request.json();
+    const { plan } = body;
+    console.log('Request body:', { plan });
+
     if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
-      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+      console.error('Invalid plan:', plan, 'Available plans:', Object.keys(PRICE_IDS));
+      return NextResponse.json({
+        error: `Invalid plan: ${plan}. Available: ${Object.keys(PRICE_IDS).join(', ')}`
+      }, { status: 400 });
     }
 
+    console.log('Looking up user in database...');
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
     });
+
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      console.error('User not found in database for clerkId:', userId);
+      return NextResponse.json({ error: 'User not found - Please complete your profile' }, { status: 404 });
     }
 
-    // Check if user already has an active subscription
+    console.log('Checking for existing subscription...');
     const existingSub = await prisma.subscription.findFirst({
       where: { userId: user.id, status: 'active' },
     });
+
     if (existingSub) {
-      return NextResponse.json({ error: 'Already subscribed' }, { status: 400 });
+      console.log('User already has active subscription');
+      return NextResponse.json({ error: 'Already subscribed to a plan' }, { status: 400 });
     }
+
+    const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
+    console.log('Creating Stripe checkout session with price:', priceId);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
-          price: PRICE_IDS[plan as keyof typeof PRICE_IDS],
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -58,9 +77,27 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log('Checkout session created successfully:', session.id);
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error('Error creating checkout session:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Detailed error creating checkout session:', error);
+
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('authentication')) {
+        return NextResponse.json({ error: 'Stripe authentication failed - Check STRIPE_SECRET_KEY' }, { status: 500 });
+      }
+      if (error.message.includes('price')) {
+        return NextResponse.json({ error: 'Invalid price ID - Check STRIPE_PRICE_* environment variables' }, { status: 500 });
+      }
+      if (error.message.includes('database') || error.message.includes('prisma')) {
+        return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

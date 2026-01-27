@@ -120,17 +120,8 @@ export async function POST(request: NextRequest) {
       success: true,
       application
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating application:", error);
-
-    // Handle unique constraint violation
-    if (error.code === 'P2002') {
-      return NextResponse.json(
-        { error: "Application already exists for this job" },
-        { status: 409 }
-      );
-    }
-
     return NextResponse.json(
       { error: "Failed to create application" },
       { status: 500 }

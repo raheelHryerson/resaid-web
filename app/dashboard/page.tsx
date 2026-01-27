@@ -53,6 +53,29 @@ export default function DashboardPage() {
   const [apiKey, setApiKey] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"overview" | "applications" | "profile" | "resume-rating" | "achievements" | "api-key">("overview");
 
+  const handleApplicationUpdate = async (id: string, updates: Partial<Application>) => {
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, ...updates }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setApplications(prev => prev.map(app => 
+          app.id === id ? result.application : app
+        ));
+      } else {
+        console.error('Failed to update application');
+      }
+    } catch (error) {
+      console.error('Error updating application:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -364,11 +387,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                  <span className="font-bold text-2xl text-primary">{applications.filter(app => app.status === 'submitted' || app.status === 'draft').length}</span>
+                  <span className="font-bold text-2xl text-primary">{applications.filter(app => ['draft', 'in-progress', 'applied', 'submitted'].includes(app.status)).length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Completed</span>
-                  <span className="font-bold text-2xl text-green-600">{applications.filter(app => app.status === 'accepted' || app.status === 'rejected').length}</span>
+                  <span className="font-bold text-2xl text-green-600">{applications.filter(app => ['accepted', 'rejected', 'withdrawn', 'completed'].includes(app.status)).length}</span>
                 </div>
               </div>
             </div>
@@ -408,32 +431,11 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-4">
                 {applications.map((application) => (
-                  <div key={application.id} className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-lg">{application.jobTitle}</h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        application.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                        application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                        application.status === 'submitted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                      }`}>
-                        {application.status}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">{application.companyName}</p>
-                    <p className="text-sm text-gray-500 mb-2">Resume: {application.resume.fileName}</p>
-                    <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
-                      <a
-                        href={application.jobUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80"
-                      >
-                        View Job →
-                      </a>
-                    </div>
-                  </div>
+                  <ApplicationCard 
+                    key={application.id} 
+                    application={application} 
+                    onUpdate={handleApplicationUpdate}
+                  />
                 ))}
               </div>
             )}
@@ -934,6 +936,130 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ApplicationCard({ application, onUpdate }: { 
+  application: Application; 
+  onUpdate: (id: string, updates: Partial<Application>) => void; 
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    jobTitle: application.jobTitle,
+    companyName: application.companyName,
+    status: application.status
+  });
+
+  const handleSave = () => {
+    onUpdate(application.id, editData);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditData({
+      jobTitle: application.jobTitle,
+      companyName: application.companyName,
+      status: application.status
+    });
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+      <div className="flex justify-between items-start mb-2">
+        {isEditing ? (
+          <input
+            type="text"
+            value={editData.jobTitle}
+            onChange={(e) => setEditData(prev => ({ ...prev, jobTitle: e.target.value }))}
+            className="font-semibold text-lg bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded px-2 py-1 w-full"
+          />
+        ) : (
+          <h3 className="font-semibold text-lg">{application.jobTitle}</h3>
+        )}
+        
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <select
+              value={editData.status}
+              onChange={(e) => setEditData(prev => ({ ...prev, status: e.target.value }))}
+              className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-600"
+            >
+              <option value="draft">Draft</option>
+              <option value="in-progress">In Progress</option>
+              <option value="applied">Applied</option>
+              <option value="submitted">Submitted</option>
+              <option value="interviewing">Interviewing</option>
+              <option value="accepted">Accepted</option>
+              <option value="rejected">Rejected</option>
+              <option value="withdrawn">Withdrawn</option>
+              <option value="completed">Completed</option>
+            </select>
+          ) : (
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              application.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+              application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+              application.status === 'submitted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+              application.status === 'interviewing' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+              application.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+              application.status === 'applied' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' :
+              application.status === 'completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' :
+              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+            }`}>
+              {application.status}
+            </span>
+          )}
+          
+          {isEditing ? (
+            <div className="flex gap-1">
+              <button
+                onClick={handleSave}
+                className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleCancel}
+                className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {isEditing ? (
+        <input
+          type="text"
+          value={editData.companyName}
+          onChange={(e) => setEditData(prev => ({ ...prev, companyName: e.target.value }))}
+          className="text-gray-600 dark:text-gray-400 mb-2 bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded px-2 py-1 w-full"
+        />
+      ) : (
+        <p className="text-gray-600 dark:text-gray-400 mb-2">{application.companyName}</p>
+      )}
+      
+      <p className="text-sm text-gray-500 mb-2">Resume: {application.resume.fileName}</p>
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
+        <a
+          href={application.jobUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:text-primary/80"
+        >
+          View Job →
+        </a>
+      </div>
     </div>
   );
 }
