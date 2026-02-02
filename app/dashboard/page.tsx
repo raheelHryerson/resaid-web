@@ -48,6 +48,8 @@ export default function DashboardPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [applicationSearch, setApplicationSearch] = useState("");
+  const [applicationSort, setApplicationSort] = useState("date-desc");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string>("");
@@ -142,8 +144,19 @@ export default function DashboardPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    if (tabParam === 'api-key') {
-      setActiveTab('api-key');
+    if (!tabParam) return;
+
+    const allowedTabs: Array<typeof activeTab> = [
+      "overview",
+      "applications",
+      "profile",
+      "resume-rating",
+      "achievements",
+      "api-key"
+    ];
+
+    if (allowedTabs.includes(tabParam as typeof activeTab)) {
+      setActiveTab(tabParam as typeof activeTab);
     }
   }, []);
 
@@ -176,6 +189,60 @@ export default function DashboardPage() {
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
+
+  const normalizeStatus = (status: string | undefined) => {
+    if (!status) return "applied";
+    if (["applied", "interview", "offer", "rejected"].includes(status)) {
+      return status;
+    }
+    if (["interviewing"].includes(status)) return "interview";
+    if (["accepted"].includes(status)) return "offer";
+    if (["draft", "in-progress", "submitted"].includes(status)) return "applied";
+    if (["withdrawn", "completed"].includes(status)) return "rejected";
+    return "applied";
+  };
+
+  const normalizedSearch = applicationSearch.trim().toLowerCase();
+  const filteredApplications = applications.filter(app => {
+    if (!normalizedSearch) return true;
+    const jobTitle = app.jobTitle?.toLowerCase() || "";
+    const companyName = app.companyName?.toLowerCase() || "";
+    return jobTitle.includes(normalizedSearch) || companyName.includes(normalizedSearch);
+  });
+
+  const sortApplications = (list: Application[]) => {
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+      switch (applicationSort) {
+        case "date-asc":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "date-desc":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "company-asc":
+          return (a.companyName || "").localeCompare(b.companyName || "");
+        case "company-desc":
+          return (b.companyName || "").localeCompare(a.companyName || "");
+        case "title-asc":
+          return (a.jobTitle || "").localeCompare(b.jobTitle || "");
+        case "title-desc":
+          return (b.jobTitle || "").localeCompare(a.jobTitle || "");
+        case "status-asc":
+          return normalizeStatus(a.status).localeCompare(normalizeStatus(b.status));
+        case "status-desc":
+          return normalizeStatus(b.status).localeCompare(normalizeStatus(a.status));
+        default:
+          return 0;
+      }
+    });
+    return sorted;
+  };
+
+  const sortedApplications = sortApplications(filteredApplications);
+
+  const appliedCount = applications.filter(app => normalizeStatus(app.status) === "applied").length;
+  const interviewCount = applications.filter(app => normalizeStatus(app.status) === "interview").length;
+  const offerCount = applications.filter(app => normalizeStatus(app.status) === "offer").length;
+  const rejectedCount = applications.filter(app => normalizeStatus(app.status) === "rejected").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background dark:from-background dark:via-primary/10 dark:to-background">
@@ -386,12 +453,20 @@ export default function DashboardPage() {
                   <span className="font-bold text-2xl">{applications.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                  <span className="font-bold text-2xl text-primary">{applications.filter(app => ['draft', 'in-progress', 'applied', 'submitted'].includes(app.status)).length}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Applied</span>
+                  <span className="font-bold text-2xl text-primary">{appliedCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Completed</span>
-                  <span className="font-bold text-2xl text-green-600">{applications.filter(app => ['accepted', 'rejected', 'withdrawn', 'completed'].includes(app.status)).length}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Interview</span>
+                  <span className="font-bold text-2xl text-indigo-600">{interviewCount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Offer</span>
+                  <span className="font-bold text-2xl text-green-600">{offerCount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Rejected</span>
+                  <span className="font-bold text-2xl text-red-600">{rejectedCount}</span>
                 </div>
               </div>
             </div>
@@ -430,13 +505,45 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {applications.map((application) => (
-                  <ApplicationCard 
-                    key={application.id} 
-                    application={application} 
-                    onUpdate={handleApplicationUpdate}
-                  />
-                ))}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="text-sm text-gray-500">
+                    Showing {sortedApplications.length} of {applications.length}
+                  </div>
+                  <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={applicationSearch}
+                      onChange={(e) => setApplicationSearch(e.target.value)}
+                      placeholder="Search by company or job title"
+                      className="w-full sm:w-72 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
+                    />
+                    <select
+                      value={applicationSort}
+                      onChange={(e) => setApplicationSort(e.target.value)}
+                      className="w-full sm:w-52 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
+                    >
+                      <option value="date-desc">Newest first</option>
+                      <option value="date-asc">Oldest first</option>
+                      <option value="company-asc">Company A-Z</option>
+                      <option value="company-desc">Company Z-A</option>
+                      <option value="title-asc">Job title A-Z</option>
+                      <option value="title-desc">Job title Z-A</option>
+                      <option value="status-asc">Status A-Z</option>
+                      <option value="status-desc">Status Z-A</option>
+                    </select>
+                  </div>
+                </div>
+                {sortedApplications.length === 0 ? (
+                  <div className="text-sm text-gray-500">No applications match your search.</div>
+                ) : (
+                  sortedApplications.map((application) => (
+                    <ApplicationCard 
+                      key={application.id} 
+                      application={application} 
+                      onUpdate={handleApplicationUpdate}
+                    />
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -944,11 +1051,25 @@ function ApplicationCard({ application, onUpdate }: {
   application: Application; 
   onUpdate: (id: string, updates: Partial<Application>) => void; 
 }) {
+  const normalizeStatus = (status: string | undefined) => {
+    if (!status) return "applied";
+    if (["applied", "interview", "offer", "rejected"].includes(status)) {
+      return status;
+    }
+    if (["interviewing"].includes(status)) return "interview";
+    if (["accepted"].includes(status)) return "offer";
+    if (["draft", "in-progress", "submitted"].includes(status)) return "applied";
+    if (["withdrawn", "completed"].includes(status)) return "rejected";
+    return "applied";
+  };
+
+  const normalizedStatus = normalizeStatus(application.status);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     jobTitle: application.jobTitle,
     companyName: application.companyName,
-    status: application.status
+    jobUrl: application.jobUrl,
+    status: normalizedStatus
   });
 
   const handleSave = () => {
@@ -960,10 +1081,13 @@ function ApplicationCard({ application, onUpdate }: {
     setEditData({
       jobTitle: application.jobTitle,
       companyName: application.companyName,
-      status: application.status
+      jobUrl: application.jobUrl,
+      status: normalizedStatus
     });
     setIsEditing(false);
   };
+
+  const statusLabel = normalizedStatus;
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
@@ -986,28 +1110,20 @@ function ApplicationCard({ application, onUpdate }: {
               onChange={(e) => setEditData(prev => ({ ...prev, status: e.target.value }))}
               className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-600"
             >
-              <option value="draft">Draft</option>
-              <option value="in-progress">In Progress</option>
               <option value="applied">Applied</option>
-              <option value="submitted">Submitted</option>
-              <option value="interviewing">Interviewing</option>
-              <option value="accepted">Accepted</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
               <option value="rejected">Rejected</option>
-              <option value="withdrawn">Withdrawn</option>
-              <option value="completed">Completed</option>
             </select>
           ) : (
             <span className={`px-2 py-1 text-xs rounded-full ${
-              application.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-              application.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-              application.status === 'submitted' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-              application.status === 'interviewing' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-              application.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-              application.status === 'applied' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' :
-              application.status === 'completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' :
+              statusLabel === 'offer' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+              statusLabel === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+              statusLabel === 'interview' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' :
+              statusLabel === 'applied' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
               'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
             }`}>
-              {application.status}
+              {statusLabel}
             </span>
           )}
           
@@ -1047,18 +1163,29 @@ function ApplicationCard({ application, onUpdate }: {
       ) : (
         <p className="text-gray-600 dark:text-gray-400 mb-2">{application.companyName}</p>
       )}
-      
-      <p className="text-sm text-gray-500 mb-2">Resume: {application.resume.fileName}</p>
-      <div className="flex justify-between items-center text-xs text-gray-500">
-        <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
+
+      {isEditing ? (
+        <input
+          type="url"
+          value={editData.jobUrl}
+          onChange={(e) => setEditData(prev => ({ ...prev, jobUrl: e.target.value }))}
+          className="text-sm text-gray-600 dark:text-gray-300 mb-2 bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded px-2 py-1 w-full"
+          placeholder="Job posting URL"
+        />
+      ) : (
         <a
           href={application.jobUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:text-primary/80"
+          className="text-sm text-primary hover:text-primary/80 mb-2 inline-block"
         >
-          View Job →
+          {application.jobUrl}
         </a>
+      )}
+      
+      <p className="text-sm text-gray-500 mb-2">Resume: {application.resume.fileName}</p>
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <span>Added {new Date(application.createdAt).toLocaleDateString()}</span>
       </div>
     </div>
   );

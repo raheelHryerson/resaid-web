@@ -4,24 +4,34 @@ import { NextResponse } from "next/server";
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { clerkId: clerkUserId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const body = await request.json();
-    const { companyName, jobTitle, status } = body;
+    const { companyName, jobTitle, jobUrl, status } = body;
 
     // Update the application
     const application = await prisma.application.updateMany({
       where: {
         id: params.id,
-        userId, // Ensure user can only update their own applications
+        userId: user.id, // Ensure user can only update their own applications
       },
       data: {
         ...(companyName !== undefined && { companyName }),
         ...(jobTitle !== undefined && { jobTitle }),
+        ...(jobUrl !== undefined && { jobUrl }),
         ...(status !== undefined && { status }),
       },
     });

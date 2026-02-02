@@ -18,14 +18,23 @@ export async function OPTIONS() {
  */
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: CORS_HEADERS });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { clerkId: clerkUserId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404, headers: CORS_HEADERS });
+    }
+
     const applications = await prisma.application.findMany({
-      where: { userId },
+      where: { userId: user.id },
       include: {
         resume: {
           select: {
@@ -56,10 +65,19 @@ export async function GET(request: Request) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: clerkUserId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -76,14 +94,14 @@ export async function POST(request: NextRequest) {
     let applicationResumeId = resumeId;
     if (!applicationResumeId) {
       const defaultResume = await prisma.resume.findFirst({
-        where: { userId, isDefault: true },
+        where: { userId: user.id, isDefault: true },
       });
       if (defaultResume) {
         applicationResumeId = defaultResume.id;
       } else {
         // Get the most recent resume
         const recentResume = await prisma.resume.findFirst({
-          where: { userId },
+          where: { userId: user.id },
           orderBy: { createdAt: 'desc' },
         });
         if (recentResume) {
@@ -100,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Create the application (unique constraint will prevent duplicates)
     const application = await prisma.application.create({
       data: {
-        userId,
+        userId: user.id,
         resumeId: applicationResumeId,
         jobUrl,
         companyName,
