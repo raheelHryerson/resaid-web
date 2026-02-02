@@ -2,8 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { userId: clerkUserId } = await auth();
 
     if (!clerkUserId) {
@@ -22,30 +23,44 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const body = await request.json();
     const { companyName, jobTitle, jobUrl, status } = body;
 
-    // Update the application
-    const application = await prisma.application.updateMany({
+    const existing = await prisma.application.findFirst({
       where: {
-        id: params.id,
-        userId: user.id, // Ensure user can only update their own applications
-      },
-      data: {
-        ...(companyName !== undefined && { companyName }),
-        ...(jobTitle !== undefined && { jobTitle }),
-        ...(jobUrl !== undefined && { jobUrl }),
-        ...(status !== undefined && { status }),
+        id,
+        userId: user.id,
       },
     });
 
-    if (application.count === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Application not found or access denied" },
         { status: 404 }
       );
     }
 
-    // Fetch the updated application
-    const updatedApplication = await prisma.application.findUnique({
-      where: { id: params.id },
+    if (jobUrl !== undefined && jobUrl !== existing.jobUrl) {
+      const conflict = await prisma.application.findFirst({
+        where: {
+          userId: user.id,
+          jobUrl: jobUrl,
+          NOT: { id }
+        }
+      });
+      if (conflict) {
+        return NextResponse.json(
+          { error: "Another application with this job URL already exists" },
+          { status: 409 }
+        );
+      }
+    }
+
+    const updatedApplication = await prisma.application.update({
+      where: { id },
+      data: {
+        ...(companyName !== undefined && { companyName }),
+        ...(jobTitle !== undefined && { jobTitle }),
+        ...(jobUrl !== undefined && { jobUrl }),
+        ...(status !== undefined && { status }),
+      },
       include: {
         resume: {
           select: {

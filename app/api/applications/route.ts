@@ -19,22 +19,38 @@ export async function OPTIONS() {
 export async function GET(request: Request) {
   try {
     const { userId: clerkUserId } = await auth();
+    let userId: string | null = null;
 
-    if (!clerkUserId) {
+    if (clerkUserId) {
+      const user = await prisma.user.findUnique({
+        where: { clerkId: clerkUserId },
+        select: { id: true },
+      });
+      userId = user?.id || null;
+    } else {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const apiKeyValue = authHeader.substring(7);
+        const apiKeyRecord = await prisma.apiKey.findUnique({
+          where: { key: apiKeyValue, isActive: true },
+          include: { user: { select: { id: true } } },
+        });
+        if (apiKeyRecord) {
+          userId = apiKeyRecord.user.id;
+          await prisma.apiKey.update({
+            where: { id: apiKeyRecord.id },
+            data: { lastUsedAt: new Date() },
+          });
+        }
+      }
+    }
+
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: CORS_HEADERS });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: clerkUserId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404, headers: CORS_HEADERS });
-    }
-
     const applications = await prisma.application.findMany({
-      where: { userId: user.id },
+      where: { userId },
       include: {
         resume: {
           select: {
@@ -66,18 +82,34 @@ export async function GET(request: Request) {
 export async function POST(request: NextRequest) {
   try {
     const { userId: clerkUserId } = await auth();
+    let userId: string | null = null;
 
-    if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (clerkUserId) {
+      const user = await prisma.user.findUnique({
+        where: { clerkId: clerkUserId },
+        select: { id: true },
+      });
+      userId = user?.id || null;
+    } else {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const apiKeyValue = authHeader.substring(7);
+        const apiKeyRecord = await prisma.apiKey.findUnique({
+          where: { key: apiKeyValue, isActive: true },
+          include: { user: { select: { id: true } } },
+        });
+        if (apiKeyRecord) {
+          userId = apiKeyRecord.user.id;
+          await prisma.apiKey.update({
+            where: { id: apiKeyRecord.id },
+            data: { lastUsedAt: new Date() },
+          });
+        }
+      }
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: clerkUserId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -94,14 +126,14 @@ export async function POST(request: NextRequest) {
     let applicationResumeId = resumeId;
     if (!applicationResumeId) {
       const defaultResume = await prisma.resume.findFirst({
-        where: { userId: user.id, isDefault: true },
+        where: { userId, isDefault: true },
       });
       if (defaultResume) {
         applicationResumeId = defaultResume.id;
       } else {
         // Get the most recent resume
         const recentResume = await prisma.resume.findFirst({
-          where: { userId: user.id },
+          where: { userId },
           orderBy: { createdAt: 'desc' },
         });
         if (recentResume) {
@@ -118,7 +150,7 @@ export async function POST(request: NextRequest) {
     // Create the application (unique constraint will prevent duplicates)
     const application = await prisma.application.create({
       data: {
-        userId: user.id,
+        userId,
         resumeId: applicationResumeId,
         jobUrl,
         companyName,
